@@ -14,6 +14,7 @@
   "bugs": {
     "url": "https://github.com/skalio/teambeamjs/issues"
   },
+  "license": "MIT",
   "licenses": [
     {
       "type": "MIT",
@@ -44,6 +45,6 @@
     "jsonfile": "^2.2.3",
     "os-homedir": "^1.0.1",
     "q": "^1.4.1",
-    "read": "^1.0.7"
+    "readline-sync": "^1.2.22"
   }
 }
