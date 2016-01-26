@@ -5,8 +5,8 @@ Client to access the TeamBeam service.
 ## Getting Started
 Install the module with: `npm install skalio/teambeamjs`
 
-```javascript
-var teambeamjs = require('teambeamjs');
+```
+teambeamjs --help
 ```
 
 ## Documentation
@@ -22,5 +22,5 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 _(Nothing yet)_
 
 ## License
-Copyright (c) 2015 Henning Verbeek  
+Copyright (c) 2015 Skalio GmbH
 Licensed under the MIT license.
