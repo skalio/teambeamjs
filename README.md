@@ -3,26 +3,167 @@
 Client to access the TeamBeam service.
 
 ## Getting Started
-Install the commandline tool with: `npm install -g skalio/teambeamjs`
+Install the commandline tool with: `npm install -g skalio/teambeamjs`. It is
+recommended that you install the tool globally. Depending on your environment, you may need to execute this with superuser privileges.
 
-Depending on your environment, you may need to execute this with superuser privileges.
+You need a valid TeamBeam account in order to use `teambeamjs`. Create one for
+free at [free.teambeam.de](https://free.teambeam.de/my/).
 
+`teambeamjs` provides help screens wherever possible:
 ```
-teambeamjs --help
+$ teambeamjs --help
 ```
+
+Once installed, create an initial configuration file:
+```
+$ teambeamjs init
+Settings could not be imported
+Creating a new config file
+Please provide the details of your TeamBeam account.
+
+
+Your email address []: bob@example.org
+Your password: ******
+Hostname [free.teambeam.de]:
+Save settings (y/N)? y
+Settings have been saved
+```
+
+Then upload some files. If some information is missing, `teambeamjs` will ask
+you for it.
+```
+$ teambeamjs upload --to alice@example.com --subject "Pics from yesterday" DSC01472.jpg DSC01473.jpg
+User "bob@example.org" has logged in successfully
+Message (end with . on empty line):
+> Hello Alice,
+> have a look at the pictures below. Aren't they gorgeous?
+> Cheers,
+>   Bob
+> .
+Creating new reservation
+Reservation "1mas9tsr42kt7nv980emf3sice" created
+Uploading "f18yeoxn2e" (81780 Bytes)
+Upload of "f18yeoxn2e" completed
+Uploading "f18yeoy3ho" (143275 Bytes)
+Upload of "f18yeoy3ho" completed
+Confirming reservation "1mas9tsr42kt7nv980emf3sice"
+Reservation confirmed
+User "bob@example.org" has logged out successfully
+```
+
+Or you can download transfers:
+```
+$ teambeamjs download --include-sent
+User "bob@example.org" has logged in successfully
+Downloading transfers for "bob@example.org"
+Created "/Users/Bob/Downloads/transfers/1d326lr5k474209uf4hnglb57cbpimw4htqp33lg"
+Downloading files for transfer "1d326lr5k474209uf4hnglb57cbpimw4htqp33lg"
+Download starting for "f18yeoxn2e"
+Download completed for "f18yeoy3ho"
+All files for transfer "1d326lr5k474209uf4hnglb57cbpimw4htqp33lg" have been downloaded
+Transfer "1d326lr5k474209uf4hnglb57cbpimw4htqp33lg" exported to "/Users/Bob/Downloads/transfers/1d326lr5k474209uf4hnglb57cbpimw4htqp33lg/transfer.json"
+Transfer download completed
+User "bob@example.org" has logged out successfully
+```
+
 
 ## Documentation
-_(Coming soon)_
 
-## Examples
-_(Coming soon)_
+### Configuration files
+`teambeamjs` uses configuration files to hold the necessary account and server
+configuration to access a TeamBeam server.
 
-## Contributing
-In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
+**Security notice:** The configuration files contain your access credentials
+for the given TeamBeam servers. Make sure to protect the files accordingly.
+
+Use different configuration files, if you have multiple accounts. To select
+a config file, use the `--config` flag.
+
+Create the config file:
+```
+$ teambeamjs init --config ~/bob-at-work.teambeamjs
+Settings could not be imported
+Creating a new config file
+Please provide the details of your TeamBeam account.
+
+
+Your email address []: user.bob@example.com
+Your password: ********
+Hostname [teambeam.example.com]:
+Save settings (y/N)? y
+Settings have been saved
+```
+
+Use the config file when uploading / downloading:
+```
+$ teambeamjs upload --config ~/bob-at-work.teambeamjs path/to/file
+...
+$ teambeamjs download --config ~/bob-at-work.teambeamjs
+...
+```
+### Transfer metadata
+When downloading a transfer, `teambeamjs` creates a JSON-encoded file containing
+the metadata of the transfer. It is named `transfer.json` and located in the
+downloaded transfer directory.
+
+### Selective transfer download
+By default, `teambeamjs download` will retrieve all new (_unread_) transfers
+that have been sent to the current user. As a result, transfers will get
+downloaded only once.
+
+This filter can be changed using these flags:
+* `--include-old`: Also download transfers that have been downloaded before and are no longer marked _unread_
+* `--include-sent`: Also download transfers that have been _sent_ by the current user
+
+These flags can be combined.
+
+### Transfer filenames
+It is legal to use all sorts of characters when naming files during a TeamBeam
+upload. When downloading these files however, this may cause problems on the
+downloading host, where characters may not be readable or have conflicting
+purposes.
+
+Therefore, by default, `teambeamjs` uses a unique ASCII-based identifier when
+naming downloaded files, called the _objectId_. This avoids any conflicts or
+problems and leads to unique filenames. The intended filename, as specified
+by the uploader, can be looked up in the transfer's metadata JSON object
+`transfer.json`.
+
+To use the intended filenames instead, use the flag `--use-filename`.
+
+### Downloading transfers in a loop
+Using the `--interval <delay>` option when in download-mode, `teambeamjs` will
+enter an endless loop of download requests. In between download requests, it
+will sleep `<delay>` seconds. To exit the loop, kill the process or CTRL-C out.
+
+```
+$ teambeamjs download --interval 5
+Logging in user "bob@example.org"
+User "bob@example.org" has logged in successfully
+Downloading transfers for "bob@example.org"
+Transfer download completed
+Waiting 5 seconds
+Downloading transfers for "bob@example.org"
+Transfer download completed
+Waiting 5 seconds
+^C
+```
+
+### Update teambeamjs
+Use the node package manager to keep `teambeamjs` up to date:
+
+```
+$ sudo npm update -g skalio/teambeamjs
+```
 
 ## Release History
-_(Nothing yet)_
+* v0.1.2    2016-03-08  Adds support for download-intervals
+* v0.1.1    2016-02-23  Adds support for transfer passwords
+* v0.1.0    2016-01-26  Initial Release
+
+`teambeamjs` releases are available on [github](https://github.com/skalio/teambeamjs).
 
 ## License
-Copyright (c) 2015 Skalio GmbH
+Copyright (c) 2016 Skalio GmbH <info@skalio.com>
+
 Licensed under the MIT license.
