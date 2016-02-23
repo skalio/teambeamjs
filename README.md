@@ -3,7 +3,9 @@
 Client to access the TeamBeam service.
 
 ## Getting Started
-Install the module with: `npm install skalio/teambeamjs`
+Install the commandline tool with: `npm install -g skalio/teambeamjs`
+
+Depending on your environment, you may need to execute this with superuser privileges.
 
 ```
 teambeamjs --help
