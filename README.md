@@ -41,11 +41,11 @@ Message (end with . on empty line):
 >   Bob
 > .
 Creating new reservation
-Reservation created
+Reservation "1mas9tsr42kt7nv980emf3sice" created
 Uploading "f18yeoxn2e" (81780 Bytes)
-Upload finished: {"size":81780,"objectId":"f18yeoxn2e","status":200,"chunkEnd":0,"chunkStart":0,"chunkedTransfer":false,"totalFileSize":0}
+Upload of "f18yeoxn2e" completed
 Uploading "f18yeoy3ho" (143275 Bytes)
-Upload finished: {"size":143275,"objectId":"f18yeoy3ho","status":200,"chunkEnd":0,"chunkStart":0,"chunkedTransfer":false,"totalFileSize":0}
+Upload of "f18yeoy3ho" completed
 Confirming reservation "1mas9tsr42kt7nv980emf3sice"
 Reservation confirmed
 User "bob@example.org" has logged out successfully
@@ -55,13 +55,13 @@ Or you can download transfers:
 ```
 $ teambeamjs download --include-sent
 User "bob@example.org" has logged in successfully
-Downloading transfers for "hank@pray4snow.de"
+Downloading transfers for "bob@example.org"
 Created "/Users/Bob/Downloads/transfers/1d326lr5k474209uf4hnglb57cbpimw4htqp33lg"
 Downloading files for transfer "1d326lr5k474209uf4hnglb57cbpimw4htqp33lg"
 Download starting for "f18yeoxn2e"
 Download completed for "f18yeoy3ho"
 All files for transfer "1d326lr5k474209uf4hnglb57cbpimw4htqp33lg" have been downloaded
-Transfer "1d326lr5k474209uf4hnglb57cbpimw4htqp33lg" exported to "/Users/hank/Downloads/transfers/1d326lr5k474209uf4hnglb57cbpimw4htqp33lg/transfer.json"
+Transfer "1d326lr5k474209uf4hnglb57cbpimw4htqp33lg" exported to "/Users/Bob/Downloads/transfers/1d326lr5k474209uf4hnglb57cbpimw4htqp33lg/transfer.json"
 Transfer download completed
 User "bob@example.org" has logged out successfully
 ```
@@ -101,6 +101,53 @@ $ teambeamjs upload --config ~/bob-at-work.teambeamjs path/to/file
 $ teambeamjs download --config ~/bob-at-work.teambeamjs
 ...
 ```
+### Transfer metadata
+When downloading a transfer, `teambeamjs` creates a JSON-encoded file containing
+the metadata of the transfer. It is named `transfer.json` and located in the
+downloaded transfer directory.
+
+### Selective transfer download
+By default, `teambeamjs download` will retrieve all new (_unread_) transfers
+that have been sent to the current user. As a result, transfers will get
+downloaded only once.
+
+This filter can be changed using these flags:
+* `--include-old`: Also download transfers that have been downloaded before and are no longer marked _unread_
+* `--include-sent`: Also download transfers that have been _sent_ by the current user
+
+These flags can be combined.
+
+### Transfer filenames
+It is legal to use all sorts of characters when naming files during a TeamBeam
+upload. When downloading these files however, this may cause problems on the
+downloading host, where characters may not be readable or have conflicting
+purposes.
+
+Therefore, by default, `teambeamjs` uses a unique ASCII-based identifier when
+naming downloaded files, called the _objectId_. This avoids any conflicts or
+problems and leads to unique filenames. The intended filename, as specified
+by the uploader, can be looked up in the transfer's metadata JSON object
+`transfer.json`.
+
+To use the intended filenames instead, use the flag `--use-filename`.
+
+### Downloading transfers in a loop
+Using the `--interval <delay>` option when in download-mode, `teambeamjs` will
+enter an endless loop of download requests. In between download requests, it
+will sleep `<delay>` seconds. To exit the loop, kill the process or CTRL-C out.
+
+```
+$ teambeamjs download --interval 5
+Logging in user "bob@example.org"
+User "bob@example.org" has logged in successfully
+Downloading transfers for "bob@example.org"
+Transfer download completed
+Waiting 5 seconds
+Downloading transfers for "bob@example.org"
+Transfer download completed
+Waiting 5 seconds
+^C
+```
 
 ### Update teambeamjs
 Use the node package manager to keep `teambeamjs` up to date:
@@ -110,12 +157,13 @@ $ sudo npm update -g skalio/teambeamjs
 ```
 
 ## Release History
-* v0.1.1: 2016-02-23, Adds support for transfer passwords
-* v0.1.0: 2016-01-26, Initial Release
+* v0.1.2    2016-03-08  Adds support for download-intervals
+* v0.1.1    2016-02-23  Adds support for transfer passwords
+* v0.1.0    2016-01-26  Initial Release
 
 `teambeamjs` releases are available on [github](https://github.com/skalio/teambeamjs).
 
 ## License
-Copyright (c) 2015 Skalio GmbH <info@skalio.com>
+Copyright (c) 2016 Skalio GmbH <info@skalio.com>
 
 Licensed under the MIT license.
