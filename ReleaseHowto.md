@@ -50,3 +50,4 @@ Github should now show a single new commit as well as a new release.
 ## Back to work
 1. switch back to master: `git checkout master`
 1. delete the release branch again: `git branch -D release`
+
