@@ -1,7 +1,7 @@
 {
   "name": "teambeamjs",
   "description": "Client to access the TeamBeam service.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "homepage": "https://github.com/skalio/teambeamjs",
   "author": {
     "name": "Henning Verbeek",
