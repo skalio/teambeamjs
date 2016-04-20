@@ -157,6 +157,7 @@ $ sudo npm update -g skalio/teambeamjs
 ```
 
 ## Release History
+* v0.2.0    2017-10-26  Fixing spcial characters issue. Proxy Support. Support for uploading directories. Quiet output flag. Support for IDN domains in E-Mail addresses.
 * v0.1.3    2016-03-23  Fixing download; adding progress information when `--verbose`
 * v0.1.2    2016-03-08  Adds support for download-intervals
 * v0.1.1    2016-02-23  Adds support for transfer passwords

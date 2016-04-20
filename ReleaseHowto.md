@@ -7,8 +7,8 @@ Remotes are setup like this:
 ```
 github	git@github.com:skalio/teambeamjs.git (fetch)
 github	git@github.com:skalio/teambeamjs.git (push)
-origin	git@karlsruhe.inside.teambeam.net:teambeamjs.git (fetch)
-origin	git@karlsruhe.inside.teambeam.net:teambeamjs.git (push)
+origin	git@git.skalio.net:teambeamjs.git (fetch)
+origin	git@git.skalio.net:teambeamjs.git (push)
 ```
 
 The following remote branches exist:
