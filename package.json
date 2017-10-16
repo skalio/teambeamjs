@@ -54,6 +54,7 @@
     "protogram-help": "^1.0.2",
     "q": "^1.5.0",
     "readline-sync": "^1.4.7",
+    "request": "^2.83.0",
     "status-bar": "^2.0.3",
     "utf8": "^2.1.2"
   }
