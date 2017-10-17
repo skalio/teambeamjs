@@ -41,7 +41,6 @@
     "teambeamjs": "lib/teambeamjs.js"
   },
   "dependencies": {
-    "bhttp": "^1.2.4",
     "easy-zip": "0.0.4",
     "jsonfile": "^2.4.0",
     "mkdirp": "^0.5.1",
