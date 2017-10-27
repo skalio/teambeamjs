@@ -43,8 +43,9 @@
   "dependencies": {
     "easy-zip": "0.0.4",
     "jsonfile": "^2.4.0",
+    "logfilestream": "^1.1.0",
     "mkdirp": "^0.5.1",
-    "moment": "^2.18.1",
+    "moment": "^2.19.1",
     "node-progress-3": "^0.3.10",
     "node-zip-dir": "^1.0.2",
     "os-homedir": "^1.0.2",
