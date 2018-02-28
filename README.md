@@ -32,7 +32,7 @@ Settings have been saved
 Then upload some files. If some information is missing, `teambeamjs` will ask
 you for it.
 ```
-$ teambeamjs upload --to alice@example.com --subject "Pics from yesterday" DSC01472.jpg DSC01473.jpg
+$ teambeamjs upload --to alice@example.com --subject 'Pics from yesterday' DSC01472.jpg DSC01473.jpg
 User "bob@example.org" has logged in successfully
 Message (end with . on empty line):
 > Hello Alice,
@@ -50,6 +50,9 @@ Confirming reservation "1mas9tsr42kt7nv980emf3sice"
 Reservation confirmed
 User "bob@example.org" has logged out successfully
 ```
+
+For the strings in --message and --subject please use single quotes (') instead of double quotes (").
+Strings in single quotes are not expanded by bash and therefore not interpreted, making sure special characters do not cause problems.
 
 Or you can download transfers:
 ```
@@ -157,6 +160,7 @@ $ sudo npm update -g skalio/teambeamjs
 ```
 
 ## Release History
+* v0.2.1    2017-10-26  Fixing issue with number as transfer passphrase. Better temp folder support
 * v0.2.0    2017-10-26  Fixing spcial characters issue. Proxy Support. Support for uploading directories. Quiet output flag. Support for IDN domains in E-Mail addresses.
 * v0.1.3    2016-03-23  Fixing download; adding progress information when `--verbose`
 * v0.1.2    2016-03-08  Adds support for download-intervals
@@ -166,6 +170,6 @@ $ sudo npm update -g skalio/teambeamjs
 `teambeamjs` releases are available on [github](https://github.com/skalio/teambeamjs).
 
 ## License
-Copyright (c) 2016 Skalio GmbH <info@skalio.com>
+Copyright (c) 2018 Skalio GmbH <info@skalio.com>
 
 Licensed under the MIT license.
