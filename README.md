@@ -160,6 +160,7 @@ $ sudo npm update -g skalio/teambeamjs
 ```
 
 ## Release History
+* v0.2.1    2017-10-26  Fixing issue with number as transfer passphrase. Better temp folder support
 * v0.2.0    2017-10-26  Fixing spcial characters issue. Proxy Support. Support for uploading directories. Quiet output flag. Support for IDN domains in E-Mail addresses.
 * v0.1.3    2016-03-23  Fixing download; adding progress information when `--verbose`
 * v0.1.2    2016-03-08  Adds support for download-intervals
@@ -169,6 +170,6 @@ $ sudo npm update -g skalio/teambeamjs
 `teambeamjs` releases are available on [github](https://github.com/skalio/teambeamjs).
 
 ## License
-Copyright (c) 2017 Skalio GmbH <info@skalio.com>
+Copyright (c) 2018 Skalio GmbH <info@skalio.com>
 
 Licensed under the MIT license.
