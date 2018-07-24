@@ -35,15 +35,16 @@ at the bottom; commit
 The github releases don't need to show the individual WiP commit history, so
 we squash them:
 
+1. Go to detached HEAD state at tag of previous release: `git checkout v0.x.x`
 1. Create a local release branch: `git checkout -b release`
-1. Find the first commit since the previous release: `git log --oneline`
-1. Soft-Reset to it: `git reset --soft <commitId>`
-1. Combine all changes into a single commit: `git commit --amend`, but change the commit message to "Lifting version to v0.x.y"
-1. Confirm that the result is no different from master: `git diff master` shall show nothing
-1. Tag the commit: `git tag -a v0.x.y -m "version 0.x.y"`
+1. Make sure we are up to date on github at HEAD of master branch:  `git pull github master`
+1. Merge origin master to onto this position, making sure, origin master is favoured: `git merge --squash -X theirs origin/master` 
+1. Combine all changes into a single commit: `git commit -a -m "Lifting version to v0.y.y" -m ""`
+1. Confirm that the result is no different from master: `git diff origin master` shall show nothing
+1. Tag the commit: `git tag -a v0.y.y -m "version 0.y.y"`
 
 ## Release to Github
-1. Push everything up, but make sure it ends up in github's master branch: `git push github release:master v0.x.y`
+1. Push everything up, but make sure it ends up in github's master branch: `git push github release:master v0.y.y`
 
 Github should now show a single new commit as well as a new release.
 
