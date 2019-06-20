@@ -160,6 +160,7 @@ $ sudo npm update -g skalio/teambeamjs
 ```
 
 ## Release History
+* v0.2.4    2019-06-20  Lifting versions of dependencies.
 * v0.2.3    2018-12-21  Fixing issue where uploads without content-length were rejected.
 * v0.2.2    2018-07-24  Fixing issue where files without name extension could not be uploaded. Fixed download of already downloaded transfers.
 * v0.2.1    2017-10-26  Fixing issue with number as transfer passphrase. Better temp folder support
@@ -172,6 +173,6 @@ $ sudo npm update -g skalio/teambeamjs
 `teambeamjs` releases are available on [github](https://github.com/skalio/teambeamjs).
 
 ## License
-Copyright (c) 2018 Skalio GmbH <info@skalio.com>
+Copyright (c) 2019 Skalio GmbH <support@teambeam.de>
 
 Licensed under the MIT license.
