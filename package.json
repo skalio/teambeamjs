@@ -1,11 +1,11 @@
 {
   "name": "teambeamjs",
   "description": "Client to access the TeamBeam service.",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "homepage": "https://github.com/skalio/teambeamjs",
   "author": {
-    "name": "Henning Verbeek",
-    "email": "hv@skalio.com"
+    "name": "Skalio GmbH",
+    "email": "info@skalio.com"
   },
   "repository": {
     "type": "git",
@@ -23,20 +23,20 @@
   ],
   "main": "lib/teambeamjs",
   "engines": {
-    "node": ">= 0.8.0"
+    "node": ">= 10.13.0"
   },
   "scripts": {
     "start": "node lib/teambeamjs.js download",
     "test": "grunt nodeunit"
   },
   "devDependencies": {
-    "grunt": "^1.0.4",
-    "grunt-contrib-jshint": "^2.1.0",
-    "grunt-contrib-nodeunit": "^2.0.0",
+    "grunt": "^1.4.1",
+    "grunt-contrib-jshint": "^3.2.0",
+    "grunt-contrib-nodeunit": "^4.0.0",
     "grunt-contrib-watch": "^1.1.0"
   },
   "keywords": [],
-  "preferGlobal": "true",
+  "preferGlobal": true,
   "bin": {
     "teambeamjs": "lib/teambeamjs.js"
   },
@@ -57,6 +57,6 @@
     "status-bar": "^2.0.3",
     "tmp": "0.1.0",
     "utf8": "^3.0.0",
-    "zip-local": "^0.3.4"
+    "zip-local": "^0.3.5"
   }
 }
