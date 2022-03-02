@@ -72,11 +72,11 @@ User "bob@example.org" has logged out successfully
 Another option is to copy received transfers to a Drive folder
 ```
 $ teambeamjs copy --dir 4711
-Logging in user "tv@skalio.com"
+Logging in user "bob@example.org"
 User "bob@example.org" has logged in successfully
 Copying transfers for "bob@example.org"
 Response contains 248 entries
-No transfers to copy
+Transfer copy completed
 User "bob@example.org" has logged out successfully
 ```
 
