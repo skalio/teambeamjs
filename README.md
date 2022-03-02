@@ -69,6 +69,15 @@ Transfer download completed
 User "bob@example.org" has logged out successfully
 ```
 
+Another option is to copy received transfers to a Drive folder
+
+$ teambeamjs copy --dir 4711
+Logging in user "tv@skalio.com"
+User "bob@example.org" has logged in successfully
+Copying transfers for "bob@example.org"
+Response contains 248 entries
+No transfers to copy
+User "bob@example.org" has logged out successfully
 
 ## Documentation
 
@@ -134,9 +143,9 @@ by the uploader, can be looked up in the transfer's metadata JSON object
 
 To use the intended filenames instead, use the flag `--use-filename`.
 
-### Downloading transfers in a loop
-Using the `--interval <delay>` option when in download-mode, `teambeamjs` will
-enter an endless loop of download requests. In between download requests, it
+### Downloading or copying transfers in a loop
+Using the `--interval <delay>` option when in download- or copy-mode, `teambeamjs` will
+enter an endless loop of download or copy requests. In between requests, it
 will sleep `<delay>` seconds. To exit the loop, kill the process or CTRL-C out.
 
 ```
@@ -160,6 +169,7 @@ $ sudo npm update -g skalio/teambeamjs
 ```
 
 ## Release History
+* v0.3.0    2022-03-02  Adding new feature to copy received transfers to a drive folder. Interval actions now re-login on lost user sesion. Lifting versions of dependencies.
 * v0.2.4    2019-06-20  Fixing issue with zipping folders preio to uploading. Lifting versions of dependencies.
 * v0.2.3    2018-12-21  Fixing issue where uploads without content-length were rejected.
 * v0.2.2    2018-07-24  Fixing issue where files without name extension could not be uploaded. Fixed download of already downloaded transfers.
@@ -173,6 +183,6 @@ $ sudo npm update -g skalio/teambeamjs
 `teambeamjs` releases are available on [github](https://github.com/skalio/teambeamjs).
 
 ## License
-Copyright (c) 2019 Skalio GmbH <support@teambeam.de>
+Copyright (c) 2022 Skalio GmbH <support@teambeam.de>
 
 Licensed under the MIT license.
