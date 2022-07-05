@@ -170,8 +170,9 @@ $ sudo npm update -g skalio/teambeamjs
 ```
 
 ## Release History
+* v0.3.1    2022-07-05  Files are now uploaded sequentially - one upload waiting before the next starts in order to prevent RateLimitExceptions. Lifting versions of dependencies.
 * v0.3.0    2022-03-02  Adding new feature to copy received transfers to a drive folder. Interval actions now re-login on lost user sesion. Lifting versions of dependencies.
-* v0.2.4    2019-06-20  Fixing issue with zipping folders preio to uploading. Lifting versions of dependencies.
+* v0.2.4    2019-06-20  Fixing issue with zipping folders prior to uploading. Lifting versions of dependencies.
 * v0.2.3    2018-12-21  Fixing issue where uploads without content-length were rejected.
 * v0.2.2    2018-07-24  Fixing issue where files without name extension could not be uploaded. Fixed download of already downloaded transfers.
 * v0.2.1    2017-10-26  Fixing issue with number as transfer passphrase. Better temp folder support
