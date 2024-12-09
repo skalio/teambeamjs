@@ -5,7 +5,7 @@ import path from 'path';
 
 // Define the structure of the configuration
 interface Config {
-    skalioIdBaseUrl: string;
+    discoveryUrl: string;
     email: string;
     password: string;
     totpSecret: string;
@@ -20,22 +20,6 @@ class ConfigService {
         const homeDir = process.env.HOME || process.env.USERPROFILE; // Cross-platform compatibility
         this.configPath = path.join(homeDir || '', '.teambeam.conf.json');
         this.loadConfig();
-    }
-
-    // Load the configuration file
-    private loadConfig(): void {
-        try {
-            const data = fs.readFileSync(this.configPath, 'utf-8');
-            this.config = JSON.parse(data);
-        } catch (error) {
-            // Type assertion to handle the error as an instance of Error
-            if (error instanceof Error) {
-                console.error('Error loading configuration file:', error.message);
-            } else {
-                console.error('Error loading configuration file:', error);
-            }
-            this.config = null; // Reset config if loading fails
-        }
     }
 
     // Initialize a new configuration file
@@ -59,9 +43,12 @@ class ConfigService {
         }
     }
 
-    // Getter for skalioIdBaseUrl
-    public getSkalioIdBaseUrl(): string | null {
-        return this.config ? this.config.skalioIdBaseUrl : null;
+    // Getter for discoveryUrl
+    public getDiscoveryUrl(): string {
+        if (!this.config) {
+            throw new Error("No Discovery URL");
+        }
+        return this.config.discoveryUrl;
     }
 
     // Getter for email
@@ -77,6 +64,22 @@ class ConfigService {
     // Getter for totpSecret
     public getTotpSecret(): string | null {
         return this.config ? this.config.totpSecret : null;
+    }
+
+    // Load the configuration file
+    private loadConfig(): void {
+        try {
+            const data = fs.readFileSync(this.configPath, 'utf-8');
+            this.config = JSON.parse(data);
+        } catch (error) {
+            // Type assertion to handle the error as an instance of Error
+            if (error instanceof Error) {
+                console.error('Error loading configuration file:', error.message);
+            } else {
+                console.error('Error loading configuration file:', error);
+            }
+            this.config = null; // Reset config if loading fails
+        }
     }
 }
 
