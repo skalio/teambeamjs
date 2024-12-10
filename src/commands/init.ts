@@ -1,6 +1,6 @@
 // src/commands/init.ts
 
-import configService from '../services/configService';
+import configService from '../services/ConfigService';
 import {read} from "read";
 
 

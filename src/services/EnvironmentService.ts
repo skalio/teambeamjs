@@ -1,8 +1,8 @@
-// src/services/environmentService.ts
+// src/services/EnvironmentService.ts
 
-import {Environment} from '../types';
-import {fetchEnvironment} from "./skalioId";
-import ConfigService from "./configService";
+import ConfigService from "./ConfigService";
+import {fetchEnvironment} from "./skalioId/environment";
+import {Environment} from "../models";
 
 class EnvironmentService {
     private environment: Environment;

@@ -5,10 +5,22 @@ interface Token {
     token: string;
 }
 
-export const loginOperation = async (
+export enum AuthenticatorType {
+    bcrypt = "bcrypt",
+    totp = "totp",
+    recovery = "recovery",
+}
+
+export const resolveAuthenticatorType: { [key: string]: AuthenticatorType } = {
+    "bcrypt": AuthenticatorType.bcrypt,
+    "totp": AuthenticatorType.totp,
+    "recovery": AuthenticatorType.recovery,
+}
+
+export const authenticate = async (
     baseUrl: string,
     email: string,
-    authenticatorType: string,
+    authenticatorType: AuthenticatorType,
     key: string,
     token: string | null
 ): Promise<DecodedJwt> => {
@@ -33,14 +45,42 @@ export const loginOperation = async (
             payload,
             config
         );
-        console.log("Token", response.data.token);
         const decoded = new DecodedJwt(response.data.token);
-        console.log("Token scope: ", decoded.getScope());
         return decoded;
     } catch (error) {
         // Handle error
         if (axios.isAxiosError(error)) {
-            console.error('Error fetching user:', error.message);
+            console.error('Error:', error.message);
+        } else {
+            console.error('Unexpected error:', error);
+        }
+        throw error; // Re-throw the error for further handling
+    }
+}
+
+export const getAccessToken = async (
+    baseUrl: string,
+    idToken: string
+): Promise<DecodedJwt> => {
+    // Create the Axios request configuration
+    const config: AxiosRequestConfig = {
+        headers: {
+            Authorization: `Bearer ${idToken}`
+        }
+    };
+
+    try {
+        const response = await axios.post<Token>(
+            baseUrl + "/auth/access",
+            null,
+            config
+        );
+        const decoded = new DecodedJwt(response.data.token);
+        return decoded;
+    } catch (error) {
+        // Handle error
+        if (axios.isAxiosError(error)) {
+            console.error('Error:', error.message);
         } else {
             console.error('Unexpected error:', error);
         }

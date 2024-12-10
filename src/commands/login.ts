@@ -1,5 +1,5 @@
-import environmentService from "../services/environmentService";
-import {loginOperation} from "../services/skalioId/auth";
+import environmentService from "../services/EnvironmentService";
+import {authenticate, AuthenticatorType, getAccessToken, resolveAuthenticatorType} from "../services/skalioId/auth";
 import {read} from 'read';
 
 export const login = async () => {
@@ -13,10 +13,10 @@ export const login = async () => {
         replace: '*'
     });
 
-    let jwt = await loginOperation(
+    let jwt = await authenticate(
         environmentService.getBaseUrl(),
         email,
-        "bcrypt",
+        AuthenticatorType.bcrypt,
         key,
         null
     );
@@ -37,12 +37,15 @@ export const login = async () => {
         });
         key = await read({prompt: "Enter key :"});
 
-        await loginOperation(
+        jwt = await authenticate(
             environmentService.getBaseUrl(),
             email,
-            authenticatorType,
+            resolveAuthenticatorType[authenticatorType],
             key,
             jwt.token
         );
     }
+
+    const accessToken = await getAccessToken(environmentService.getBaseUrl(), jwt.token);
+    console.log("Access token:", accessToken.token);
 }

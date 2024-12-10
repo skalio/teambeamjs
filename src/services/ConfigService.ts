@@ -1,4 +1,4 @@
-// src/services/configService.ts
+// src/services/ConfigService.ts
 
 import fs from 'fs';
 import path from 'path';
