@@ -1,20 +1,41 @@
 import {DecodedJwt} from "../../models";
-import axios from "axios";
-import jwt from "jsonwebtoken";
+import axios, {AxiosRequestConfig} from "axios";
 
 interface Token {
     token: string;
 }
 
-export const loginWithPassword = async (baseUrl: string, email: string, password: string): Promise<DecodedJwt> => {
+export const loginOperation = async (
+    baseUrl: string,
+    email: string,
+    authenticatorType: string,
+    key: string,
+    token: string | null
+): Promise<DecodedJwt> => {
+    const payload = {
+        "email": email,
+        "type": authenticatorType,
+        "key": key
+    };
+    // Create the Axios request configuration
+    const config: AxiosRequestConfig = {
+        headers: {}
+    };
+    // Conditionally set the Authorization header if the token is provided
+    if (token) {
+        // @ts-ignore
+        config.headers['Authorization'] = `Bearer ${token}`;
+    }
+
     try {
         const response = await axios.post<Token>(
             baseUrl + "/auth/login",
-            {"email": email, "type": "bcrypt", "key": password}
+            payload,
+            config
         );
         console.log("Token", response.data.token);
-        const decoded = jwt.decode(response.data.token) as DecodedJwt;
-        console.log("Token scope: ", decoded.scope);
+        const decoded = new DecodedJwt(response.data.token);
+        console.log("Token scope: ", decoded.getScope());
         return decoded;
     } catch (error) {
         // Handle error

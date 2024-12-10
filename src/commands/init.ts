@@ -11,7 +11,11 @@ export const initConfig = async () => {
             prompt: "Enter discovery url: ",
         }),
         email: await read({prompt: "Enter email address: "}),
-        password: await read({prompt: "Enter password: "}),
+        password: await read({
+            prompt: "Enter password: ",
+            silent: true,
+            replace: '*'
+        }),
         totpSecret: await read({prompt: "Enter totp secret: "}),
     };
 

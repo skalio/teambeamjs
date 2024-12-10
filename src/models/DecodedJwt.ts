@@ -1,40 +1,48 @@
-export class DecodedJwt {
-    iss: string;
-    aud: string;
-    sub: string;
-    exp: number;
-    iat: number | null;
-    scope: string;
-    private customClaims: { [key: string]: any };
+import jwt, {JwtPayload} from "jsonwebtoken";
 
-    constructor(iss: string, aud: string, sub: string, exp: number, iat: number | null, scope: string, customClaims: any) {
-        this.iss = iss;
-        this.aud = aud;
-        this.sub = sub;
-        this.exp = exp;
-        this.iat = iat;
-        this.scope = scope;
-        this.customClaims = customClaims;
+export class DecodedJwt {
+    readonly token: string;
+    private readonly payload: JwtPayload;
+
+    // constructor(iss: string, aud: string, sub: string, exp: number, iat: number | null, scope: string, customClaims: any) {
+    constructor(token: string) {
+        this.token = token;
+
+        const payload = jwt.decode(token);
+        if (!payload) {
+            throw new Error("Invalid token");
+        }
+        this.payload = payload as JwtPayload;
+    }
+
+    public getSubject(): string {
+        return <string>this.payload.sub;
     }
 
     public isValid(): boolean {
         const currentTime = Math.floor(Date.now() / 1000);
-        return currentTime <= this.exp;
+        // @ts-ignore
+        return currentTime <= this.payload.exp;
+    }
+
+    public getScope(): string {
+        return this.payload['scope'];
     }
 
     public isMfaToken(): boolean {
-        return "mfa" == this.scope;
+        return "mfa" === this.getScope();
     }
 
     public isIdToken(): boolean {
-        return "idtoken" == this.scope;
+        return "idtoken" == this.getScope();
     }
 
     public isAccessToken(): boolean {
-        return "access" == this.scope;
+        return "access" == this.getScope();
     }
 
     public getAuthenticators(): string[] {
-        return this.customClaims["http://skalio.com/authenticators"] ? this.customClaims["http://skalio.com/authenticators"].auth : [];
+        return this.payload["http://skalio.com/authenticators"] ?
+            this.payload["http://skalio.com/authenticators"] : [];
     }
 }
