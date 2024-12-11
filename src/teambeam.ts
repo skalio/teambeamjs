@@ -3,9 +3,15 @@
 import {initConfig} from './commands/init';
 import {login} from "./commands/login";
 import {showProfile} from "./commands/profile";
+import {tokenStorage} from "./services/ITokenStorage";
+import {FileSystemTokenStorage} from "./services/FileSystemTokenStorage";
 
 // Main function to handle command-line arguments
 const main = () => {
+
+    // register services for CLI usage
+    ServiceLocator.register(tokenStorage, new FileSystemTokenStorage());
+
     const args = process.argv.slice(2);
     const command = args.shift();
 
