@@ -1,18 +1,11 @@
 import environmentService from "../services/EnvironmentService";
 import {fetchProfile} from "../services/skalioId/profile";
-import {AccessService} from "../services/AccessService";
-import serviceLocator from "../services/ServiceLocator";
-import * as symbols from "../services/symbols";
 
 export const showProfile = async () => {
-    const accessService: AccessService = serviceLocator.get<AccessService>(symbols.accessService);
     await environmentService.load();
 
     console.log("Fetching Profile...");
-    const profile = await fetchProfile(
-        environmentService.getBaseUrl(),
-        await accessService.getAccessToken()
-    );
+    const profile = await fetchProfile();
     console.log();
     console.log("Name      : ", profile.name);
     console.log("UID       : ", profile.uid);

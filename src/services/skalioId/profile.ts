@@ -1,23 +1,11 @@
 import {Profile} from "../../models";
-import axios, {AxiosRequestConfig} from "axios";
+import axios from "axios";
+import {skalioIdClient} from "./skalioIdClient";
 
-export const fetchProfile = async (
-    baseUrl: string,
-    accessToken: string
-): Promise<Profile> => {
+export const fetchProfile = (): Promise<Profile> => {
     try {
-        // Create the Axios request configuration
-        const config: AxiosRequestConfig = {
-            headers: {
-                Authorization: `Bearer ${accessToken}`
-            }
-        };
-        const response = await axios.get<Profile>(
-            baseUrl + "/profile",
-            config
-        );
-
-        return response.data;
+        return skalioIdClient.get<Profile>(`/profile`)
+            .then((response) => response.data);
     } catch (error) {
         // Handle error
         if (axios.isAxiosError(error)) {
