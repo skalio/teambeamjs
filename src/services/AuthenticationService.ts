@@ -4,13 +4,13 @@ import environmentService from "./EnvironmentService";
 import configService from "./ConfigService";
 import {TOTP} from "otpauth";
 import {ITokenStorage, tokenStorage} from "./ITokenStorage";
+import {ServiceLocator} from "./ServiceLocator";
 
-class AccessService {
-    private tokenStorage: ITokenStorage;
+class AuthenticationService {
+    // private storageService: ITokenStorage;
     private totp: TOTP | null = null;
 
     constructor() {
-        this.tokenStorage = ServiceLocator.get(tokenStorage);
     }
 
     getOneTimeKey() {
@@ -25,10 +25,8 @@ class AccessService {
         return this.totp.generate();
     }
 
-    private async fetchIdToken() {
-        console.debug("ID token missing or invalid; attempting authentication");
-
-        let token: DecodedJwt = await authenticate(
+    public async fetchIdToken() {
+        let decodedJwt: DecodedJwt = await authenticate(
             environmentService.getBaseUrl(),
             <string>configService.getEmail(),
             AuthenticatorType.bcrypt,
@@ -36,20 +34,22 @@ class AccessService {
             null
         );
 
-        if (token.isMfaToken()) {
+        if (decodedJwt.isMfaToken()) {
             console.debug("Multi-factor authentication is required");
 
-            token = await authenticate(
+            decodedJwt = await authenticate(
                 environmentService.getBaseUrl(),
                 <string>configService.getEmail(),
                 AuthenticatorType.totp,
                 this.getOneTimeKey(),
-                token.token
+                decodedJwt.token
             );
         }
-        this.idToken = token;
+        const storageService = ServiceLocator.get<ITokenStorage>(tokenStorage);
 
-        console.info("Authentication successful! Subject: ", this.idToken.getSubject());
+        storageService.persistToken(decodedJwt.token);
+
+        console.info("Authentication successful! Subject: ", decodedJwt.getSubject());
     }
 
 }

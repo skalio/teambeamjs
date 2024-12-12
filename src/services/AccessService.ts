@@ -2,13 +2,13 @@ import {DecodedJwt} from "../models";
 import {getAccessToken} from "./skalioId/auth";
 import environmentService from "./EnvironmentService";
 import {ITokenStorage, tokenStorage} from "./ITokenStorage";
+import {ServiceLocator} from "./ServiceLocator";
 
 class AccessService {
-    private tokenStorage: ITokenStorage;
+    // private storageService: ITokenStorage;
     private accessToken: DecodedJwt | null = null;
 
     constructor() {
-        this.tokenStorage = ServiceLocator.get(tokenStorage);
     }
 
     public async getAccessToken(): Promise<string> {
@@ -20,7 +20,8 @@ class AccessService {
     }
 
     private async fetchAccessToken() {
-        const tokenString = this.tokenStorage.fetchToken();
+        const storageService = ServiceLocator.get<ITokenStorage>(tokenStorage);
+        const tokenString = storageService.fetchToken();
         if (!tokenString) {
             throw new Error("Missing ID token");
         }

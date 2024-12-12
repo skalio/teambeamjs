@@ -1,9 +1,10 @@
 // ServiceLocator.ts
-class ServiceLocator {
+export class ServiceLocator {
     private static services: Map<symbol, any> = new Map();
 
     // Register a service with a specific key
     public static register<T>(key: symbol, service: T): void {
+        console.debug("Registered service", service);
         this.services.set(key, service);
     }
 
@@ -11,7 +12,7 @@ class ServiceLocator {
     public static get<T>(key: symbol): T {
         const service = this.services.get(key);
         if (!service) {
-            throw new Error(`Service not found: ${key.toString()}`);
+            throw new Error(`Service not found!`);
         }
         return service;
     }
