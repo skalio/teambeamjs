@@ -3,15 +3,20 @@
 import {initConfig} from './commands/init';
 import {login} from "./commands/login";
 import {showProfile} from "./commands/profile";
-import {ITokenStorage, tokenStorage} from "./services/ITokenStorage";
+import type {ITokenStorage} from "./services/ITokenStorage";
 import {FileSystemTokenStorage} from "./services/FileSystemTokenStorage";
-import {ServiceLocator} from "./services/ServiceLocator";
+import serviceLocator from "./services/ServiceLocator";
+import * as symbols from "./services/symbols";
+import {AccessService} from "./services/AccessService";
+import {AuthenticationService} from "./services/AuthenticationService";
 
 // Main function to handle command-line arguments
 const main = () => {
 
     // register services for CLI usage
-    ServiceLocator.register<ITokenStorage>(tokenStorage, new FileSystemTokenStorage());
+    serviceLocator.register<ITokenStorage>(symbols.tokenStorage, new FileSystemTokenStorage());
+    serviceLocator.register<AccessService>(symbols.accessService, new AccessService());
+    serviceLocator.register<AuthenticationService>(symbols.authenticationService, new AuthenticationService());
 
     const args = process.argv.slice(2);
     const command = args.shift();

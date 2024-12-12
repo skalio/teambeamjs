@@ -3,14 +3,16 @@ import {authenticate, AuthenticatorType} from "./skalioId/auth";
 import environmentService from "./EnvironmentService";
 import configService from "./ConfigService";
 import {TOTP} from "otpauth";
-import {ITokenStorage, tokenStorage} from "./ITokenStorage";
-import {ServiceLocator} from "./ServiceLocator";
+import type {ITokenStorage} from "./ITokenStorage";
+import serviceLocator from "./ServiceLocator";
+import * as symbols from "./symbols";
 
-class AuthenticationService {
-    // private storageService: ITokenStorage;
+export class AuthenticationService {
+    private storageService: ITokenStorage;
     private totp: TOTP | null = null;
 
     constructor() {
+        this.storageService = serviceLocator.get<ITokenStorage>(symbols.tokenStorage);
     }
 
     getOneTimeKey() {
@@ -45,13 +47,9 @@ class AuthenticationService {
                 decodedJwt.token
             );
         }
-        const storageService = ServiceLocator.get<ITokenStorage>(tokenStorage);
-
-        storageService.persistToken(decodedJwt.token);
+        this.storageService.persistToken(decodedJwt.token);
 
         console.info("Authentication successful! Subject: ", decodedJwt.getSubject());
     }
 
 }
-
-export default new AuthenticationService();

@@ -3,7 +3,8 @@ import {ITokenStorage} from "./ITokenStorage";
 import fs from "fs";
 
 export class FileSystemTokenStorage implements ITokenStorage {
-    private filePath = path.join(__dirname, ".teambeam.data.json");
+    private homeDir = process.env.HOME || process.env.USERPROFILE; // Cross-platform compatibility
+    private filePath = path.join(this.homeDir || '', '.teambeam.data.json');
 
     persistToken(token: string): void {
         const tokenDAO = this.read();

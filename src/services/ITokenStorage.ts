@@ -7,5 +7,3 @@ export interface ITokenStorage {
     removeToken(): void;
 
 }
-
-export const tokenStorage = Symbol();
