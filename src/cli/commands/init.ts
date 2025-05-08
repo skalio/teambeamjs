@@ -1,6 +1,6 @@
 // src/cli/commands/init.ts
 
-import { Command } from "commander";
+import { Command } from "@commander-js/extra-typings";
 import { z } from "zod";
 import { SkalioIdEnvironment } from "../../entities/skalioId.js";
 import { createSkalioIdApi } from "../../services/apiSkalioId.js";
@@ -17,39 +17,13 @@ interface LoginResult {
   error?: string;
 }
 
-async function attemptPasswordLogin(
-  host: string,
-  email: string,
-  password: string
-): Promise<LoginResult> {
-  console.log(`[stub] password login for ${email} @ ${host}`);
-  return {
-    success: true,
-    token: "temporary-token",
-    mfaRequired: false, // simulate MFA requirement
-  };
-}
-
-async function attemptOtpLogin(
-  host: string,
-  token: string,
-  otpCode: string
-): Promise<LoginResult> {
-  console.log(`[stub] otp login with code ${otpCode} @ ${host}`);
-  return {
-    success: true,
-    token: "real-id-token",
-    mfaRequired: false,
-  };
-}
-
 export function buildInitCommand(config: ConfigService): Command {
   return new Command("init")
     .description("Initialize TeamBeam CLI configuration")
-    .option("--host <host>", "API server hostname")
-    .option("--email <email>", "Email address")
-    .option("--password <password>", "Password")
-    .option("--otp <otp>", "OTP secret (Base32)")
+    .option("-H, --host <host>", "API server hostname")
+    .option("-e, --email <email>", "Email address")
+    .option("-p --password <password>", "Password")
+    .option("-o --otp <otp>", "OTP secret (Base32)")
     .action(async (options) => {
       const previous = {
         host: config.get("host"),
@@ -89,7 +63,7 @@ export function buildInitCommand(config: ConfigService): Command {
           )
             return "Must be a valid URL with no path and no trailing slash";
 
-          const apiSkalioId = createSkalioIdApi({ host: input });
+          const apiSkalioId = createSkalioIdApi(config);
           try {
             environment = await apiSkalioId.fetchEnvironment();
             return true;
@@ -99,8 +73,10 @@ export function buildInitCommand(config: ConfigService): Command {
         },
       });
 
-      const apiSkalioId = createSkalioIdApi({ host: host });
-      const apiSkp = createSkpApi({ host: host });
+      config.set({ host });
+
+      const apiSkalioId = createSkalioIdApi(config);
+      const apiSkp = createSkpApi(config);
 
       const email = await getOrPrompt({
         key: "email",
@@ -194,5 +170,9 @@ export function buildInitCommand(config: ConfigService): Command {
       console.log(`Host: ${host}`);
       console.log(`Email: ${email}`);
       console.log(`MFA required: ${mfaRequired ? "Yes" : "No"}`);
+
+      console.log("Fetching access token");
+      const response = await apiSkp.fetchAccessToken();
+      console.log("Access token response: ", response);
     });
 }

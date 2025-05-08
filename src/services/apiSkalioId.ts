@@ -1,20 +1,43 @@
-import axios, { AxiosInstance } from "axios";
+import axios, {
+  AxiosInstance,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
 import {
   AuthRequest,
   SkalioIdEnvironment,
   TokenResponse,
 } from "../entities/skalioId.js";
+import { ConfigService } from "./config.js";
 
 const basePathSkalioId: string = "/api/id/v3";
 
 class SkalioIdApi {
   protected apiClient: AxiosInstance;
 
-  constructor({ host }: { host: string }) {
-    this.apiClient = axios.create({
+  protected getIdToken: () => string;
+  protected setIdToken: (token: string) => void;
+
+  constructor(
+    host: string,
+    getIdToken: () => string,
+    setIdToken: (token: string) => void
+  ) {
+    this.getIdToken = getIdToken;
+    this.setIdToken = setIdToken;
+
+    const axiosConfig = {
       baseURL: `${host}${basePathSkalioId}`,
       headers: { "Content-Type": "application/json" },
-    });
+    };
+    this.apiClient = axios.create(axiosConfig);
+
+    const accessTokenInterceptor = new AccessTokenInterceptor();
+    this.apiClient.interceptors.request.use(accessTokenInterceptor.onRequest);
+    this.apiClient.interceptors.request.use(
+      accessTokenInterceptor.onResponse,
+      accessTokenInterceptor.onResponseError
+    );
   }
 
   async fetchEnvironment(): Promise<SkalioIdEnvironment> {
@@ -68,8 +91,37 @@ class SkalioIdApi {
   }
 }
 
-export function createSkalioIdApi({ host }: { host: string }): SkalioIdApi {
-  return new SkalioIdApi({
-    host: host,
-  });
+export function createSkalioIdApi(config: ConfigService): SkalioIdApi {
+  return new SkalioIdApi(
+    config.get("host")!,
+    () => config.get("idToken")!,
+    (value) => config.set({ idToken: value })
+  );
+}
+
+class AccessTokenInterceptor {
+  private accessToken?: string;
+
+  onRequest = async (
+    requestConfig: InternalAxiosRequestConfig
+  ): Promise<InternalAxiosRequestConfig> => {
+    return requestConfig;
+  };
+
+  onResponse = async (
+    requestConfig: InternalAxiosRequestConfig
+  ): Promise<InternalAxiosRequestConfig> => {
+    console.log(
+      "interceptor on response ---------------------- response headers",
+      requestConfig.headers
+    );
+    return requestConfig;
+  };
+
+  onResponseError = (error: any): any => {
+    console.log("=======================================================");
+    console.log(error);
+    let response = error.response as AxiosResponse;
+    return;
+  };
 }

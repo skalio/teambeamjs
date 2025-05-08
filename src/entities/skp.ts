@@ -1,4 +1,4 @@
-interface SkpEnvironment {
+export interface SkpEnvironment {
   server_version: number;
   storagehostIdx: number;
   product_name: string;
@@ -40,9 +40,81 @@ interface SkpEnvironment {
   lang: string;
 }
 
-interface Expiration {
+export interface AccessTokenResponse {
+  token: string;
+  adminunit?: Adminunit;
+}
+
+export interface Adminunit {
+  idx: number;
+  uid: string;
+  customerName?: string;
+  hostname: string;
+}
+
+export interface Expiration {
   values: number[];
   default: number;
 }
- export { Expiration, SkpEnvironment };
 
+export interface ReservationRequest {
+  subject?: string;
+  description?: string;
+
+  recipientNotification?: boolean;
+  deliveryNotification?: boolean;
+  recipientAuthentication?: false;
+  ttl?: number;
+  priority?: number;
+  signatureId?: number;
+  folderIdx?: number;
+  receivers?: TransferReceiver[];
+  groups?: ReceiverGroup[];
+  protection?: TransferProtection;
+  files: ReservationRequestFile[];
+}
+
+export type RecipientType = "to" | "cc" | "bcc";
+
+export interface TransferReceiver {
+  name?: string;
+  email: string;
+  type: RecipientType;
+}
+
+export interface ReceiverGroup {
+  idx: number;
+  type: RecipientType;
+}
+
+export interface TransferProtection {
+  enabled: boolean;
+  key: string;
+}
+
+export interface ReservationRequestFile {
+  name: string;
+  size: number;
+  id: string;
+}
+
+export interface ReservationResponseFile extends ReservationRequestFile {
+  objectId: string;
+}
+
+export interface ReservationResponse {
+  token: string;
+  files: ReservationResponseFile[];
+  totalSize: number;
+}
+
+export interface ReservationConfirmResult {
+  result: [{ recipientId: string }];
+}
+
+export interface UploadInfo {
+  size: number;
+  chunkStart: number;
+  chunkEnd: number;
+  totalSize: number;
+}

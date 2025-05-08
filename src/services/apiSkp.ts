@@ -1,5 +1,17 @@
-import axios, { AxiosInstance } from "axios";
-import { SkpEnvironment } from "../entities/skp.js";
+import axios, {
+  AxiosInstance,
+  AxiosProgressEvent,
+  InternalAxiosRequestConfig,
+} from "axios";
+import {
+  AccessTokenResponse,
+  ReservationConfirmResult,
+  ReservationRequest,
+  ReservationResponse,
+  SkpEnvironment,
+  UploadInfo,
+} from "../entities/skp.js";
+import { ConfigService } from "./config.js";
 
 const basePathSkp: string = "/api/skp/v1";
 
@@ -7,25 +19,179 @@ const basePathSkp: string = "/api/skp/v1";
 //                                skp-server
 // =============================================================================
 
-class SkpApi {
-  protected apiClient: AxiosInstance;
+export class SkpApi {
+  protected authenticatedClient: AxiosInstance;
+  protected unauthenticatedClient: AxiosInstance;
+  protected tokenFetcherClient: AxiosInstance;
+  protected getIdToken: () => string;
 
-  constructor({ host }: { host: string }) {
-    this.apiClient = axios.create({
+  constructor(host: string, getIdToken: () => string) {
+    this.getIdToken = getIdToken;
+
+    const axiosConfig = {
       baseURL: `${host}${basePathSkp}`,
-      headers: { "Content-Type": "application/json" },
-    });
+      //headers: { "Content-Type": "application/json" },
+    };
+
+    this.authenticatedClient = axios.create(axiosConfig);
+    this.unauthenticatedClient = axios.create(axiosConfig);
+    this.tokenFetcherClient = axios.create(axiosConfig);
+
+    const idTokenInjector = new IdTokenInjector(this.getIdToken);
+    this.tokenFetcherClient.interceptors.request.use(idTokenInjector.onRequest);
+
+    const accessTokenInterceptor = new AccessTokenInterceptor(() =>
+      this.fetchAccessToken()
+        .then((response) => {
+          //console.log(response);
+          return response.token;
+        })
+        .catch((error) => {
+          console.error("Something went wrong: ", error);
+          throw error;
+        })
+    );
+    this.authenticatedClient.interceptors.request.use(
+      accessTokenInterceptor.onRequest
+    );
+    this.authenticatedClient.interceptors.request.use(
+      accessTokenInterceptor.onResponse,
+      accessTokenInterceptor.onResponseError
+    );
   }
 
   async fetchEnvironment(): Promise<SkpEnvironment> {
-    const response = await this.apiClient.get<SkpEnvironment>("/environment");
+    const response =
+      await this.unauthenticatedClient.get<SkpEnvironment>("/environment");
     return response.data;
+  }
+
+  async fetchAccessToken(): Promise<AccessTokenResponse> {
+    const response =
+      await this.tokenFetcherClient.post<AccessTokenResponse>("/auth/access");
+    return response.data;
+  }
+
+  async createReservation(
+    request: ReservationRequest
+  ): Promise<ReservationResponse> {
+    const response = await this.authenticatedClient.post<ReservationResponse>(
+      "/reservations",
+      request
+    );
+    return response.data;
+  }
+
+  async confirmReservation(
+    reservationId: string
+  ): Promise<ReservationConfirmResult> {
+    const response =
+      await this.authenticatedClient.post<ReservationConfirmResult>(
+        `/reservations/${reservationId}/confirm`
+      );
+    return response.data;
+  }
+
+  async uploadFileChunk({
+    startByte,
+    endByte,
+    formData,
+    totalBytes,
+    onUploadProgress,
+  }: {
+    startByte: number;
+    endByte?: number;
+    formData?: FormData;
+    totalBytes?: number;
+    onUploadProgress?: (progressEvent: AxiosProgressEvent) => void;
+  }): Promise<UploadInfo> {
+    var contentRange;
+    if (
+      startByte !== undefined &&
+      endByte !== undefined &&
+      totalBytes !== undefined
+    ) {
+      contentRange = `bytes ${startByte}-${endByte - 1}/${totalBytes}`;
+    }
+    const response = await this.authenticatedClient.postForm<UploadInfo>(
+      "/upload",
+      formData,
+      {
+        headers: !contentRange
+          ? undefined
+          : {
+              "Content-Range": contentRange,
+            },
+        onUploadProgress: onUploadProgress,
+      }
+    );
+    return response.data;
+  }
+
+  async getUploadedFileSize(
+    objectId: string,
+    reservationToken: string
+  ): Promise<number> {
+    const response = await this.authenticatedClient.head(
+      `/upload/${objectId}`,
+      {
+        headers: {
+          "X-Skp-Auth": `${reservationToken}`,
+        },
+      }
+    );
+    return Number(response.headers["content-length"] ?? "0");
   }
 }
 
-export function createSkpApi({ host }: { host: string }): SkpApi {
-  return new SkpApi({ host: host });
+export function createSkpApi(config: ConfigService): SkpApi {
+  return new SkpApi(config.get("host")!, () => config.get("idToken")!);
 }
-// =============================================================================
-//                                skalio ID
-// =============================================================================
+
+class IdTokenInjector {
+  protected getIdToken: () => string;
+
+  constructor(getIdToken: () => string) {
+    this.getIdToken = getIdToken;
+  }
+
+  onRequest = async (
+    requestConfig: InternalAxiosRequestConfig
+  ): Promise<InternalAxiosRequestConfig> => {
+    requestConfig.headers.setAuthorization(`Bearer ${this.getIdToken()}`, true);
+    return requestConfig;
+  };
+}
+
+class AccessTokenInterceptor {
+  private accessToken?: string;
+
+  private fetchAccessToken: () => Promise<string>;
+
+  constructor(fetchAccessToken: () => Promise<string>) {
+    this.fetchAccessToken = fetchAccessToken;
+  }
+
+  getAccessToken = async (): Promise<string> =>
+    this.accessToken ?? (await this.fetchAccessToken());
+
+  onRequest = async (
+    requestConfig: InternalAxiosRequestConfig
+  ): Promise<InternalAxiosRequestConfig> => {
+    requestConfig.headers.setAuthorization(
+      `Bearer ${await this.getAccessToken()}`,
+      true
+    );
+    return requestConfig;
+  };
+
+  onResponse = async (
+    requestConfig: InternalAxiosRequestConfig
+  ): Promise<InternalAxiosRequestConfig> => {
+    return requestConfig;
+  };
+
+  onResponseError = (error: any): any => {
+    return;
+  };
+}
