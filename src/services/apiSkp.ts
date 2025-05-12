@@ -9,6 +9,8 @@ import {
   ReservationRequest,
   ReservationResponse,
   SkpEnvironment,
+  Transfer,
+  TransferLocation,
   UploadInfo,
 } from "../entities/skp.js";
 import { ConfigService } from "./config.js";
@@ -128,7 +130,7 @@ export class SkpApi {
     return response.data;
   }
 
-  async getUploadedFileSize(
+  async fetchUploadedFileSize(
     objectId: string,
     reservationToken: string
   ): Promise<number> {
@@ -141,6 +143,40 @@ export class SkpApi {
       }
     );
     return Number(response.headers["content-length"] ?? "0");
+  }
+
+  async fetchTransfers({
+    location,
+    search,
+  }: {
+    location?: TransferLocation;
+    search?: string;
+  }): Promise<Transfer[]> {
+    const response = await this.authenticatedClient.get<
+      ListResponse<Transfer, "transfers">
+    >("/transfers", { params: { location: location, search: search } });
+    return response.data.transfers;
+  }
+
+  async fetchTransfer(recipientId: string): Promise<Transfer> {
+    const response = await this.authenticatedClient.get<Transfer>(
+      `transfers/${recipientId}`
+    );
+    return response.data;
+  }
+
+  async copyTransferToDrive({
+    recipientId,
+    folderIdx,
+  }: {
+    recipientId: string;
+    folderIdx: number;
+  }): Promise<Transfer> {
+    const response = await this.authenticatedClient.post<Transfer>(
+      `transfers/${recipientId}/copy`,
+      { idx: folderIdx }
+    );
+    return response.data;
   }
 }
 
@@ -195,3 +231,9 @@ class AccessTokenInterceptor {
     return;
   };
 }
+
+type ListResponse<T, K extends string> = {
+  total: number;
+} & {
+  [key in K]: T[];
+};

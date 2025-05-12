@@ -118,3 +118,81 @@ export interface UploadInfo {
   chunkEnd: number;
   totalSize: number;
 }
+
+export interface Transfer {
+  recipientId: string;
+  isProtected: boolean;
+  passwordAttempts: number;
+  isLocked: boolean;
+  isRecipientAuthenticationEnabled: boolean;
+  sender?: TransferSender;
+  receiver?: TransferReceiver;
+  uploadTimestamp: string;
+  accessTimestamp?: string;
+  downloadTimestamp?: string;
+  expirationTimestamp: string;
+  subject?: string;
+  description?: string;
+  folderIdx?: number;
+  folderName?: string;
+  rootFolderIdx?: number;
+  priority?: number;
+  isInDrive: boolean;
+  isExpired: boolean;
+  isBounced: boolean;
+  isUnread: boolean;
+  malwareStatus?: string;
+  processingState?: ProcessingStatus;
+  bounceReason?: string;
+  directLink?: string;
+  totalFileSize: number;
+  joinId?: string;
+  anon?: AnonymousSender;
+  files: TransferFile[];
+}
+
+export interface TransferSender {
+  email: string;
+  realname?: string;
+  uid?: string;
+  portalUrl?: string;
+}
+
+export interface TransferReceiver extends TransferSender {
+  type: RecipientType;
+}
+
+export type MalwareStatus = "unknown" | "ok" | "infected" | "error";
+
+export type ProcessingStatus =
+  | "malwareScan"
+  | "hashCalculation"
+  | "notification"
+  | "completed";
+
+export interface AnonymousSender {
+  email?: string;
+  realname?: string;
+}
+
+export interface TransferFile {
+  objectId: string;
+  name: string;
+  size: number;
+  url: string;
+  hashsum?: string;
+  malware?: TransferFileMalwareDetails;
+  downloadCounter: number;
+  mimeType?: string;
+}
+
+export interface TransferFileMalwareDetails {
+  status?: MalwareStatus;
+  text?: string;
+}
+
+export type TransferLocation =
+  | "sentandreceived"
+  | "sent"
+  | "received"
+  | "drive";

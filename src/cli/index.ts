@@ -6,6 +6,8 @@ import {
 import colors from "ansi-colors";
 import { config } from "../services/config.js";
 import { coloredSymbols } from "../utils/symbols.js";
+import { buildCopyCommand } from "./commands/copy.js";
+import { buildDownloadCommand } from "./commands/download.js";
 import { buildInitCommand } from "./commands/init.js";
 import { buildUploadCommand } from "./commands/upload.js";
 
@@ -14,8 +16,9 @@ const program = new Command();
 program.name("teambeam").description("Modern TeamBeam CLI").version("3.0.0");
 
 program.addCommand(buildInitCommand(config));
-
 program.addCommand(buildUploadCommand(config));
+program.addCommand(buildDownloadCommand(config));
+program.addCommand(buildCopyCommand(config));
 
 // Parse args
 program.parseAsync().catch((err) => {

@@ -2,11 +2,11 @@ import axios from "axios";
 import fs from "fs";
 import { constants } from "../core/constants.js";
 import {
-  ReservationConfirmResult,
-  ReservationRequest,
-  ReservationResponse,
-  ReservationResponseFile,
-  UploadInfo,
+    ReservationConfirmResult,
+    ReservationRequest,
+    ReservationResponse,
+    ReservationResponseFile,
+    UploadInfo,
 } from "../entities/skp.js";
 import delay from "../utils/delay.js";
 import { SkpApi } from "./apiSkp.js";
@@ -67,7 +67,7 @@ export class TransferUploadService {
   private async initiateUpload(props: InitiateUploadProp): Promise<void> {
     if (props.shouldCheckUploadedFileSize) {
       try {
-        props.uploadData.startByte = await this.skpApi.getUploadedFileSize(
+        props.uploadData.startByte = await this.skpApi.fetchUploadedFileSize(
           props.uploadData.reservedFile.objectId,
           props.reservationToken
         );
