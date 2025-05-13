@@ -7,6 +7,7 @@ import colors from "ansi-colors";
 import cliProgress from "cli-progress";
 import fs from "fs";
 import inquirer from "inquirer";
+import ora from "ora";
 import path from "path";
 import { z } from "zod";
 import {
@@ -172,8 +173,9 @@ export function buildUploadCommand(config: ConfigService): Command<[string[]]> {
             colors.cyan("{bar}") +
             "| {percentage}%",
         },
-        cliProgress.Presets.shades_classic
+        cliProgress.Presets.rect
       );
+      const spinner = ora(`Confirming reservation...`);
 
       progressBar.start(100, 0, { prefix: symbols.triangleRight });
 
@@ -187,13 +189,19 @@ export function buildUploadCommand(config: ConfigService): Command<[string[]]> {
             prefix:
               progress === 100 ? coloredSymbols.tick : symbols.triangleRight,
           });
+        },
+        () => {
+          progressBar.stop();
+          spinner.start();
         }
       );
-
-      progressBar.stop();
+      spinner.succeed("Confirmed reservation");
 
       console.log(
-        `${coloredSymbols.tick} ${colors.green.bold("Successfully uploaded transfer:")} ${colors.italic(`${config.get("host")}/transfer/get/${result.result[0].recipientId}`)}`
+        `${coloredSymbols.tick} ${colors.green.bold("Successfully uploaded transfer")}`
+      );
+      console.log(
+        `  ${colors.italic(`${config.get("host")}/transfer/get/${result.result[0].recipientId}`)}`
       );
     });
 }

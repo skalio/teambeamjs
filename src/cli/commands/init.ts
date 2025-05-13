@@ -4,7 +4,6 @@ import { Command } from "@commander-js/extra-typings";
 import { z } from "zod";
 import { SkalioIdEnvironment } from "../../entities/skalioId.js";
 import { createSkalioIdApi } from "../../services/apiSkalioId.js";
-import { createSkpApi } from "../../services/apiSkp.js";
 import { ConfigService } from "../../services/config.js";
 import { getOrPrompt } from "../../utils/input.js";
 import { determineToken, jwtDecode } from "../../utils/jwt.js";
@@ -76,7 +75,6 @@ export function buildInitCommand(config: ConfigService): Command {
       config.set({ host });
 
       const apiSkalioId = createSkalioIdApi(config);
-      const apiSkp = createSkpApi(config);
 
       const email = await getOrPrompt({
         key: "email",
@@ -133,6 +131,7 @@ export function buildInitCommand(config: ConfigService): Command {
         otp = await getOrPrompt({
           key: "otp",
           message: "OTP Secret:",
+          mask: true,
           flagValue: options.otp,
           defaultValue: previous.otp,
           validate: async (val) => {
@@ -160,19 +159,6 @@ export function buildInitCommand(config: ConfigService): Command {
       if (idToken === null)
         throw new Error("StateError: should have obtained idToken by now");
 
-      console.log(`\n✅ ID token successfully obtained\n`);
-      console.dir(jwtDecode(idToken));
-      console.log("\n\n");
-
       config.set({ host, email, password, idToken, otp });
-
-      console.log("\n✅ Config saved successfully:");
-      console.log(`Host: ${host}`);
-      console.log(`Email: ${email}`);
-      console.log(`MFA required: ${mfaRequired ? "Yes" : "No"}`);
-
-      console.log("Fetching access token");
-      const response = await apiSkp.fetchAccessToken();
-      console.log("Access token response: ", response);
     });
 }

@@ -1,12 +1,14 @@
 import { Command } from "@commander-js/extra-typings";
 import colors from "ansi-colors";
+import cliProgress from "cli-progress";
 import { createSkpApi } from "../../services/apiSkp.js";
 import { ConfigService } from "../../services/config.js";
+import { runWithOptionalInterval } from "../../utils/runner.js";
 import { coloredSymbols } from "../../utils/symbols.js";
 
 export function buildCopyCommand(config: ConfigService): Command {
   return new Command("copy")
-    .description("TODO")
+    .description("Copy transfers from your inbox to a drive folder")
     .requiredOption(
       "-d, --drive <folderIdx>",
       "Drive folder ID where to copy the transfer into",
@@ -18,44 +20,56 @@ export function buildCopyCommand(config: ConfigService): Command {
       parseInt
     )
     .action(async (options) => {
-      const { drive: folderIdx } = options;
+      const { drive: folderIdx, interval } = options;
       const apiSkp = createSkpApi(config);
 
-      const receivedTransfers = await apiSkp.fetchTransfers({
-        location: "received",
-      });
-      console.log("Received transfers found: ", receivedTransfers.length);
-
-      const unaccessedTransfers = receivedTransfers.filter((t) => t.isUnread);
-
-      console.log(
-        "Unaccessed transfers of those: ",
-        unaccessedTransfers.length
-      );
-
-      if (unaccessedTransfers.length === 0) {
-        console.log("Nothing to do here, exiting");
-        return;
-      }
-
-      console.log(
-        `Copying ${unaccessedTransfers.length} transfers into drive ${folderIdx}`
-      );
-
-      for (const transfer of unaccessedTransfers) {
-        await apiSkp.copyTransferToDrive({
-          recipientId: transfer.recipientId,
-          folderIdx: folderIdx,
+      await runWithOptionalInterval(interval, async () => {
+        console.log(`${coloredSymbols.stepPrefix} Fetching transfers...`);
+        var transfers = await apiSkp.fetchTransfers({
+          location: "received",
         });
-      }
 
-      console.log(coloredSymbols.tick + colors.green(" Done!"));
-      /*
-      const copiedtransfer = await apiSkp.copyTransferToDrive({
-        recipientId: "ffh3t7lfeh2q45dvv8rx2ik1i51bxr3gm67n2h0j",
-        folderIdx: 3208,
+        transfers = transfers.filter((t) => t.isUnread);
+
+        if (transfers.length !== 0) {
+          console.log(
+            `${coloredSymbols.stepSuccess} Transfers to copy: ${transfers.length}`
+          );
+          console.log(`${coloredSymbols.stepGap}`);
+          console.log(
+            `${coloredSymbols.stepGap} Copying into drive folder ${folderIdx}...`
+          );
+
+          const bar = new cliProgress.SingleBar(
+            {
+              clearOnComplete: false,
+              hideCursor: true,
+              format: `{prefix} Copying [{bar}] {value}/{total} Transfers`,
+            },
+            cliProgress.Presets.shades_classic
+          );
+
+          bar.start(transfers.length, 0, {
+            prefix: coloredSymbols.stepActive,
+          });
+
+          for (const transfer of transfers) {
+            await apiSkp.copyTransferToDrive({
+              recipientId: transfer.recipientId,
+              folderIdx,
+            });
+            bar.increment();
+          }
+
+          bar.update(transfers.length, { prefix: coloredSymbols.stepSuccess });
+
+          bar.stop();
+          console.log(`${coloredSymbols.stepGap}`);
+          console.log(coloredSymbols.stepSuffix + colors.green(" Done!\n"));
+        } else {
+          console.log(`${coloredSymbols.stepGap}`);
+          console.log(`${coloredSymbols.stepSuffix} No new transfers found\n`);
+        }
       });
-      console.dir(copiedtransfer);
-      */
     });
 }

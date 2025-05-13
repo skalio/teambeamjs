@@ -1,7 +1,6 @@
 import axios, {
   AxiosInstance,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
+  InternalAxiosRequestConfig
 } from "axios";
 import {
   AuthRequest,
@@ -111,17 +110,10 @@ class AccessTokenInterceptor {
   onResponse = async (
     requestConfig: InternalAxiosRequestConfig
   ): Promise<InternalAxiosRequestConfig> => {
-    console.log(
-      "interceptor on response ---------------------- response headers",
-      requestConfig.headers
-    );
     return requestConfig;
   };
 
   onResponseError = (error: any): any => {
-    console.log("=======================================================");
-    console.log(error);
-    let response = error.response as AxiosResponse;
     return;
   };
 }

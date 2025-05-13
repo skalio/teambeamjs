@@ -2,11 +2,11 @@ import axios from "axios";
 import fs from "fs";
 import { constants } from "../core/constants.js";
 import {
-    ReservationConfirmResult,
-    ReservationRequest,
-    ReservationResponse,
-    ReservationResponseFile,
-    UploadInfo,
+  ReservationConfirmResult,
+  ReservationRequest,
+  ReservationResponse,
+  ReservationResponseFile,
+  UploadInfo,
 } from "../entities/skp.js";
 import delay from "../utils/delay.js";
 import { SkpApi } from "./apiSkp.js";
@@ -21,7 +21,8 @@ export class TransferUploadService {
   public async uploadTransfer(
     filePaths: string[],
     reservationRequest: ReservationRequest,
-    onProgress: (progress: number) => void
+    onProgress: (progress: number) => void,
+    onReservationConfirm: () => void
   ): Promise<ReservationConfirmResult> {
     const totalFilesSize = reservationRequest.files.reduce(
       (acc, file) => acc + file.size,
@@ -61,7 +62,10 @@ export class TransferUploadService {
       completedUploadSize += uploadData.reservedFile.size;
     }
 
-    return await this.skpApi.confirmReservation(reservation.token);
+    onReservationConfirm();
+    const result = await this.skpApi.confirmReservation(reservation.token);
+    await delay(2);
+    return result;
   }
 
   private async initiateUpload(props: InitiateUploadProp): Promise<void> {
@@ -127,8 +131,8 @@ export class TransferUploadService {
   private async retryUpload(props: InitiateUploadProp): Promise<void> {
     props.retryCount++;
     const wait = Math.min(
-      2 ** props.retryCount * 1000,
-      constants.maxDelayBetweenRetriesMs
+      2 ** props.retryCount,
+      constants.maxDelayBetweenRetriesSec
     );
     await delay(wait);
     props.uploadData.startByte = 0;

@@ -17,7 +17,6 @@ export class ConfigService {
 
   set(values: Partial<ConfigSchema>): void {
     this.store.set(values);
-    console.log(this.store.path);
   }
 
   clear(): void {

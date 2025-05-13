@@ -3,6 +3,7 @@ import axios, {
   AxiosProgressEvent,
   InternalAxiosRequestConfig,
 } from "axios";
+import { Readable } from "stream";
 import {
   AccessTokenResponse,
   ReservationConfirmResult,
@@ -10,6 +11,7 @@ import {
   ReservationResponse,
   SkpEnvironment,
   Transfer,
+  TransferFile,
   TransferLocation,
   UploadInfo,
 } from "../entities/skp.js";
@@ -177,6 +179,21 @@ export class SkpApi {
       { idx: folderIdx }
     );
     return response.data;
+  }
+
+  //async downloadTransferFile({file, path} : {file: TransferFile, path: fs.PathLike}) : Promise<void> {
+  async streamTransferFile({
+    file,
+    onUploadProgress,
+  }: {
+    file: TransferFile;
+    onUploadProgress?: (progressEvent: AxiosProgressEvent) => void;
+  }): Promise<Readable> {
+    const reponse = await this.unauthenticatedClient.get<Readable>(file.url, {
+      responseType: "stream",
+      onDownloadProgress: onUploadProgress,
+    });
+    return reponse.data;
   }
 }
 

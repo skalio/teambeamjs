@@ -24,6 +24,8 @@ export const symbols = {
   triangleUpOutline: "△",
   triangleLeft: "◀",
   triangleRight: "▶",
+  triangleLeftOutlined: "◁",
+  triangleRightOutlined: "▷",
   lozenge: "◆",
   lozengeOutline: "◇",
   hamburger: "☰",
@@ -35,6 +37,7 @@ export const symbols = {
   oneSeventh: "⅐",
   oneNinth: "⅑",
   oneTenth: "⅒",
+  fullHeightBar: "│",
 };
 
 export const coloredSymbols = {
@@ -42,4 +45,11 @@ export const coloredSymbols = {
   info: colors.yellow("ℹ"),
   warning: colors.red.bold("⚠"),
   cross: colors.red.bold("✘"),
+  stepPrefix: "┌",
+  stepInfo: "◇",
+  stepGap: "│",
+  stepActive: colors.cyan("◇"),
+  stepSuccess: colors.green("◆"),
+  stepDone: colors.green("✔"),
+  stepSuffix: "└",
 };
