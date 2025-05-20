@@ -8,6 +8,10 @@ import { ConfigService } from "./config.js";
 
 const basePathSkalioId: string = "/api/id/v3";
 
+// =============================================================================
+//                                skalio-ID
+// =============================================================================
+
 class SkalioIdApi {
   protected apiClient: AxiosInstance;
 

@@ -42,7 +42,7 @@ export const symbols = {
 
 export const coloredSymbols = {
   tick: colors.green("✔"),
-  info: colors.yellow("ℹ"),
+  info: colors.yellow("▶"),
   warning: colors.red.bold("⚠"),
   cross: colors.red.bold("✘"),
   stepPrefix: "┌",

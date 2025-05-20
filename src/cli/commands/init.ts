@@ -1,20 +1,13 @@
-// src/cli/commands/init.ts
-
 import { Command } from "@commander-js/extra-typings";
+import colors from "ansi-colors";
 import { z } from "zod";
 import { SkalioIdEnvironment } from "../../entities/skalioId.js";
 import { createSkalioIdApi } from "../../services/apiSkalioId.js";
 import { ConfigService } from "../../services/config.js";
 import { getOrPrompt } from "../../utils/input.js";
 import { determineToken, jwtDecode } from "../../utils/jwt.js";
+import { coloredSymbols } from "../../utils/symbols.js";
 import { generateTotpCode } from "../../utils/totp.js";
-
-interface LoginResult {
-  success: boolean;
-  token?: string;
-  mfaRequired?: boolean;
-  error?: string;
-}
 
 export function buildInitCommand(config: ConfigService): Command {
   return new Command("init")
@@ -124,6 +117,21 @@ export function buildInitCommand(config: ConfigService): Command {
           }
         },
       });
+
+      if (options.otp && mfaToken === null) {
+        if (idToken === null) {
+          throw new Error(
+            "StateError: should have obtained either ID- or MFA token by now"
+          );
+        } else {
+          console.log(
+            coloredSymbols.info +
+              colors.yellow(
+                ` OTP secret '${options.otp}' provided but not needed for account '${email}', ignoring\n`
+              )
+          );
+        }
+      }
 
       let otp = options.otp ?? previous.otp ?? "";
 
