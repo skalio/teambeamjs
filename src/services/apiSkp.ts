@@ -197,8 +197,14 @@ export class SkpApi {
   }
 }
 
-export function createSkpApi(config: ConfigService): SkpApi {
-  return new SkpApi(config.get("host")!, () => config.get("idToken")!);
+export function createSkpApi(
+  config: ConfigService,
+  overrideHost?: string
+): SkpApi {
+  return new SkpApi(
+    overrideHost ?? config.get("host")!,
+    () => config.get("idToken")!
+  );
 }
 
 class IdTokenInjector {

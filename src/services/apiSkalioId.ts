@@ -1,7 +1,4 @@
-import axios, {
-  AxiosInstance,
-  InternalAxiosRequestConfig
-} from "axios";
+import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import {
   AuthRequest,
   SkalioIdEnvironment,
@@ -90,9 +87,12 @@ class SkalioIdApi {
   }
 }
 
-export function createSkalioIdApi(config: ConfigService): SkalioIdApi {
+export function createSkalioIdApi(
+  config: ConfigService,
+  overrideHost?: string
+): SkalioIdApi {
   return new SkalioIdApi(
-    config.get("host")!,
+    overrideHost ?? config.get("host")!,
     () => config.get("idToken")!,
     (value) => config.set({ idToken: value })
   );

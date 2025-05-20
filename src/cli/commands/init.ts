@@ -62,7 +62,7 @@ export function buildInitCommand(config: ConfigService): Command {
           )
             return "Must be a valid URL with no path and no trailing slash";
 
-          const apiSkalioId = createSkalioIdApi(config);
+          const apiSkalioId = createSkalioIdApi(config, input);
           try {
             environment = await apiSkalioId.fetchEnvironment();
             return true;
