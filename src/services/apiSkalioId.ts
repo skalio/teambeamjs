@@ -1,4 +1,8 @@
-import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
+import axios, {
+  AxiosInstance,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
 import {
   AuthRequest,
   SkalioIdEnvironment,
@@ -34,7 +38,7 @@ class SkalioIdApi {
 
     const accessTokenInterceptor = new AccessTokenInterceptor();
     this.apiClient.interceptors.request.use(accessTokenInterceptor.onRequest);
-    this.apiClient.interceptors.request.use(
+    this.apiClient.interceptors.response.use(
       accessTokenInterceptor.onResponse,
       accessTokenInterceptor.onResponseError
     );
@@ -111,13 +115,11 @@ class AccessTokenInterceptor {
     return requestConfig;
   };
 
-  onResponse = async (
-    requestConfig: InternalAxiosRequestConfig
-  ): Promise<InternalAxiosRequestConfig> => {
-    return requestConfig;
+  onResponse = async (response: AxiosResponse): Promise<AxiosResponse> => {
+    return response;
   };
 
   onResponseError = (error: any): any => {
-    return;
+    return Promise.reject(error);
   };
 }

@@ -4,4 +4,5 @@ export const constants = {
   idealChunkUploadDuration: 60, // 60 seconds
   maxUploadRetries: 10,
   maxDelayBetweenRetriesSec: 20, // 20 seconds
+  tempDirName: "teambeamjs",
 } as const;

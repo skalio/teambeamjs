@@ -3,8 +3,9 @@ import colors from "ansi-colors";
 import { z } from "zod";
 import { SkalioIdEnvironment } from "../../entities/skalioId.js";
 import { createSkalioIdApi } from "../../services/apiSkalioId.js";
+import { createSkpApi } from "../../services/apiSkp.js";
 import { ConfigService } from "../../services/config.js";
-import { getOrPrompt } from "../../utils/input.js";
+import { getOrPromptInput, getOrPromptSecret } from "../../utils/input.js";
 import { determineToken, jwtDecode } from "../../utils/jwt.js";
 import { coloredSymbols } from "../../utils/symbols.js";
 import { generateTotpCode } from "../../utils/totp.js";
@@ -26,7 +27,7 @@ export function buildInitCommand(config: ConfigService): Command {
 
       var environment: SkalioIdEnvironment;
 
-      const host = await getOrPrompt({
+      const host = await getOrPromptInput({
         key: "host",
         message: "API Host:",
         flagValue: options.host,
@@ -56,11 +57,18 @@ export function buildInitCommand(config: ConfigService): Command {
             return "Must be a valid URL with no path and no trailing slash";
 
           const apiSkalioId = createSkalioIdApi(config, input);
+          const apiSkp = createSkpApi(config, input);
+          let environmentSkp;
           try {
+            environmentSkp = await apiSkp.fetchEnvironment();
             environment = await apiSkalioId.fetchEnvironment();
             return true;
           } catch (error) {
-            return `No Skalio ID REST API found at provided host. Error: '${error}'`;
+            if (environmentSkp && environment === undefined) {
+              return `This version of teambeamjs is not compatible anymore with the provided TeamBeam server.\nConsider downgrading to a previous version.`;
+            } else {
+              return `No TeamBeam server found at provided host. Error: '${error}'`;
+            }
           }
         },
       });
@@ -69,7 +77,7 @@ export function buildInitCommand(config: ConfigService): Command {
 
       const apiSkalioId = createSkalioIdApi(config);
 
-      const email = await getOrPrompt({
+      const email = await getOrPromptInput({
         key: "email",
         message: "Email:",
         flagValue: options.email,
@@ -86,12 +94,11 @@ export function buildInitCommand(config: ConfigService): Command {
       let mfaToken: string | null = null;
       let mfaRequired = false;
 
-      const password = await getOrPrompt({
+      const password = await getOrPromptSecret({
         key: "password",
         message: "Password:",
         flagValue: options.password,
         defaultValue: previous.password,
-        mask: true,
         validate: async (input) => {
           if (!input) return "Password is required";
           try {
@@ -136,10 +143,9 @@ export function buildInitCommand(config: ConfigService): Command {
       let otp = options.otp ?? previous.otp ?? "";
 
       if (mfaRequired) {
-        otp = await getOrPrompt({
+        otp = await getOrPromptSecret({
           key: "otp",
           message: "OTP Secret:",
-          mask: true,
           flagValue: options.otp,
           defaultValue: previous.otp,
           validate: async (val) => {

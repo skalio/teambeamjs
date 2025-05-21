@@ -1,6 +1,7 @@
 import axios, {
   AxiosInstance,
   AxiosProgressEvent,
+  AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
 import { Readable } from "stream";
@@ -34,7 +35,6 @@ export class SkpApi {
 
     const axiosConfig = {
       baseURL: `${host}${basePathSkp}`,
-      //headers: { "Content-Type": "application/json" },
     };
 
     this.authenticatedClient = axios.create(axiosConfig);
@@ -46,10 +46,7 @@ export class SkpApi {
 
     const accessTokenInterceptor = new AccessTokenInterceptor(() =>
       this.fetchAccessToken()
-        .then((response) => {
-          //console.log(response);
-          return response.token;
-        })
+        .then((response) => response.token)
         .catch((error) => {
           console.error("Something went wrong: ", error);
           throw error;
@@ -58,7 +55,7 @@ export class SkpApi {
     this.authenticatedClient.interceptors.request.use(
       accessTokenInterceptor.onRequest
     );
-    this.authenticatedClient.interceptors.request.use(
+    this.authenticatedClient.interceptors.response.use(
       accessTokenInterceptor.onResponse,
       accessTokenInterceptor.onResponseError
     );
@@ -244,14 +241,12 @@ class AccessTokenInterceptor {
     return requestConfig;
   };
 
-  onResponse = async (
-    requestConfig: InternalAxiosRequestConfig
-  ): Promise<InternalAxiosRequestConfig> => {
-    return requestConfig;
+  onResponse = async (response: AxiosResponse): Promise<AxiosResponse> => {
+    return response;
   };
 
   onResponseError = (error: any): any => {
-    return;
+    return Promise.reject(error);
   };
 }
 

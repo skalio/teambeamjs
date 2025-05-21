@@ -3,20 +3,18 @@ import { z } from "zod";
 import { RecipientType, TransferReceiver } from "../entities/skp.js";
 import { mapRecipients } from "./entities.js";
 
-export async function getOrPrompt({
+export async function getOrPromptInput({
   key,
   message,
   flagValue,
   defaultValue,
   validate,
-  mask = false,
 }: {
   key: string;
   message: string;
   flagValue?: string;
   defaultValue?: string;
   validate?: (value: string) => true | string | Promise<true | string>;
-  mask?: boolean;
 }): Promise<string> {
   if (flagValue !== undefined) {
     if (validate) {
@@ -28,7 +26,43 @@ export async function getOrPrompt({
     return flagValue;
   }
 
-  if (mask && defaultValue) {
+  const { value } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "value",
+      message,
+      default: defaultValue,
+      validate,
+    },
+  ]);
+
+  return value;
+}
+
+export async function getOrPromptSecret({
+  key,
+  message,
+  flagValue,
+  defaultValue,
+  validate,
+}: {
+  key: string;
+  message: string;
+  flagValue?: string;
+  defaultValue?: string;
+  validate?: (value: string) => true | string | Promise<true | string>;
+}): Promise<string> {
+  if (flagValue !== undefined) {
+    if (validate) {
+      const result = await validate(flagValue);
+      if (result !== true) {
+        throw new Error(`Invalid value for --${key}: ${result}`);
+      }
+    }
+    return flagValue;
+  }
+
+  if (defaultValue) {
     const { overwrite } = await inquirer.prompt([
       {
         type: "confirm",
@@ -50,7 +84,43 @@ export async function getOrPrompt({
 
   const { value } = await inquirer.prompt([
     {
-      type: mask ? "password" : "input",
+      type: "password",
+      name: "value",
+      message,
+      default: defaultValue,
+      validate,
+    },
+  ]);
+
+  return value;
+}
+
+export async function getOrPromptEditor({
+  key,
+  message,
+  flagValue,
+  defaultValue,
+  validate,
+}: {
+  key: string;
+  message: string;
+  flagValue?: string;
+  defaultValue?: string;
+  validate?: (value: string) => true | string | Promise<true | string>;
+}): Promise<string> {
+  if (flagValue !== undefined) {
+    if (validate) {
+      const result = await validate(flagValue);
+      if (result !== true) {
+        throw new Error(`Invalid value for --${key}: ${result}`);
+      }
+    }
+    return flagValue;
+  }
+
+  const { value } = await inquirer.prompt([
+    {
+      type: "editor",
       name: "value",
       message,
       default: defaultValue,
@@ -121,5 +191,44 @@ async function promptRecipientsOfType(type: RecipientType): Promise<string[]> {
       );
       return recipients;
     }
+  }
+}
+
+export async function getOrPromptTtl({
+  flagValue,
+  defaultValue,
+  values,
+}: {
+  flagValue?: number;
+  defaultValue: number;
+  values: number[];
+}): Promise<number> {
+
+  if (flagValue) {
+    const schema = z.union([
+      z.number().refine((num) => values.includes(num), {
+        message: `TTL value must be one of the allowed TTL values: ${values.join(", ")}.`,
+      }),
+      z.undefined(),
+    ]);
+    const result = schema.safeParse(flagValue);
+    if (result.error) {
+      throw Error(result.error.issues[0].message);
+    } else {
+      return flagValue;
+    }
+  } else {
+    const input = (
+      await inquirer.prompt([
+        {
+          type: "list",
+          name: "ttl",
+          message: `TTL:`,
+          choices: values.map((ttl) => `${ttl} days`),
+          default: values.indexOf(defaultValue),
+        },
+      ])
+    ).ttl;
+    return input;
   }
 }

@@ -18,12 +18,19 @@ export class TransferUploadService {
     this.skpApi = skpApi;
   }
 
-  public async uploadTransfer(
-    filePaths: string[],
-    reservationRequest: ReservationRequest,
-    onProgress: (progress: number) => void,
-    onReservationConfirm: () => void
-  ): Promise<ReservationConfirmResult> {
+  public async uploadTransfer({
+    filePaths,
+    reservationRequest,
+    onProgress,
+    onReservationCreated,
+    onReservationConfirm,
+  }: {
+    filePaths: string[];
+    reservationRequest: ReservationRequest;
+    onProgress: (progress: number) => void;
+    onReservationCreated: () => void;
+    onReservationConfirm: () => void;
+  }): Promise<ReservationConfirmResult> {
     const totalFilesSize = reservationRequest.files.reduce(
       (acc, file) => acc + file.size,
       0
@@ -43,6 +50,7 @@ export class TransferUploadService {
 
     const reservation: ReservationResponse =
       await this.skpApi.createReservation(reservationRequest);
+    onReservationCreated();
 
     const uploadDataList: UploadData[] = filePaths.map((filePath, i) => ({
       reservedFile: reservation.files.find((f) => f.id === `${i}`)!,

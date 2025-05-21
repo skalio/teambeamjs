@@ -5,9 +5,8 @@ import {
 } from "@commander-js/extra-typings";
 import colors from "ansi-colors";
 import cliProgress from "cli-progress";
-import fs from "fs";
-import inquirer from "inquirer";
-import ora from "ora";
+import fs from "fs-extra";
+import ora, { oraPromise } from "ora";
 import path from "path";
 import { z } from "zod";
 import {
@@ -19,8 +18,14 @@ import {
 import { createSkpApi } from "../../services/apiSkp.js";
 import { ConfigService } from "../../services/config.js";
 import { TransferUploadService } from "../../services/transferUpload.js";
+import { ZipService } from "../../services/zip.js";
 import { mapRecipients } from "../../utils/entities.js";
-import { promptRecipients } from "../../utils/input.js";
+import {
+  getOrPromptInput,
+  getOrPromptSecret,
+  getOrPromptTtl,
+  promptRecipients,
+} from "../../utils/input.js";
 import { coloredSymbols, symbols } from "../../utils/symbols.js";
 
 export function buildUploadCommand(config: ConfigService): Command<[string[]]> {
@@ -35,173 +40,215 @@ export function buildUploadCommand(config: ConfigService): Command<[string[]]> {
     .option("-P, --password [password]", "Transfer password")
     .argument("<files...>", "Files of the transfer")
     .action(async (args, options) => {
-      const files: ReservationRequestFile[] = [];
-
-      for (var [i, fileName] of args.entries()) {
-        if (!fs.existsSync(fileName)) {
-          throw new InvalidArgumentError(
-            `Provided file does not exist: '${fileName}'`
-          );
-        }
-        let stat = fs.statSync(fileName);
-        if (!stat.isFile()) {
-          throw new InvalidArgumentError(
-            `Directories are not supported yet (${fileName})`
-          );
-        }
-        files.push({
-          name: path.basename(fileName),
-          size: stat.size,
-          id: `${i}`,
-        });
-      }
-
-      const flagRecipients: TransferReceiver[] = [
-        ...mapRecipients("to", options.to),
-        ...mapRecipients("cc", options.cc),
-        ...mapRecipients("bcc", options.bcc),
-      ];
-
-      if (
-        flagRecipients.some((r) => z.string().email().safeParse(r.email).error)
-      ) {
-        throw new InvalidOptionArgumentError(
-          "Please provide valid email addresses"
-        );
-      }
-
-      const recipients = [...flagRecipients];
-
-      if (recipients.length == 0) {
-        const recipientsInput = await promptRecipients();
-        recipients.push(...recipientsInput);
-      }
-
-      const subject =
-        options.subject ??
-        (
-          await inquirer.prompt([
-            {
-              type: "input",
-              name: "subject",
-              message: `Subject:`,
-            },
-          ])
-        ).subject;
-
-      const message =
-        options.message ??
-        (
-          await inquirer.prompt([
-            {
-              type: "editor",
-              name: "message",
-              message: `Message:`,
-            },
-          ])
-        ).message;
-
       const apiSkp = createSkpApi(config);
-
-      const { default: ttlDefault, values: ttlValues } = (
-        await apiSkp.fetchEnvironment()
-      ).expiration;
-
-      let ttl: number;
-      if (options.ttl) {
-        const schema = z.union([
-          z.number().refine((num) => ttlValues.includes(num), {
-            message: `TTL value must be one of the allowed TTL values: ${ttlValues.join(", ")}.`,
-          }),
-          z.undefined(),
-        ]);
-        const result = schema.safeParse(options.ttl);
-        if (result.error) {
-          throw Error(result.error.issues[0].message);
-        }
-        ttl = options.ttl;
-      } else {
-        ttl = (
-          await inquirer.prompt([
-            {
-              type: "list",
-              name: "ttl",
-              message: `TTL:`,
-              choices: ttlValues.map((ttl) => `${ttl} days`),
-              default: ttlValues.indexOf(ttlDefault),
-            },
-          ])
-        ).ttl;
-      }
-
-      let protection: TransferProtection | undefined;
-      if (options.password === undefined) {
-        protection = undefined;
-      } else {
-        const transferPassword =
-          options.password === true
-            ? (
-                await inquirer.prompt([
-                  {
-                    type: "password",
-                    name: "input",
-                    message: "Transfer password",
-                    validate: (input) => {
-                      if (input.length <= 0)
-                        return "Please provide a transfer password";
-                      return true;
-                    },
-                  },
-                ])
-              ).input
-            : options.password;
-        protection = { enabled: true, key: transferPassword };
-      }
-
-      const reservationRequest: ReservationRequest = {
-        receivers: recipients,
-        subject: subject,
-        description: message,
-        protection: protection,
-        files: files,
-      };
-
-      const progressBar = new cliProgress.SingleBar(
-        {
-          format:
-            "{prefix} Transfer upload |" +
-            colors.cyan("{bar}") +
-            "| {percentage}%",
-        },
-        cliProgress.Presets.rect
-      );
-      const spinner = ora(`Confirming reservation...`);
-
-      progressBar.start(100, 0, { prefix: symbols.triangleRight });
-
+      const zipService = new ZipService();
       const uploadService = new TransferUploadService(apiSkp);
 
-      const result = await uploadService.uploadTransfer(
-        args,
-        reservationRequest,
-        (progress) => {
-          progressBar.update(progress, {
-            prefix:
-              progress === 100 ? coloredSymbols.tick : symbols.triangleRight,
-          });
-        },
-        () => {
-          progressBar.stop();
-          spinner.start();
-        }
-      );
-      spinner.succeed("Confirmed reservation");
+      const { localFiles, temporaryFiles, reservationFiles } =
+        await prepareFiles(args, zipService);
 
-      console.log(
-        `${coloredSymbols.tick} ${colors.green.bold("Successfully uploaded transfer")}`
-      );
-      console.log(
-        `  ${colors.italic(`${config.get("host")}/transfer/get/${result.result[0].recipientId}`)}`
-      );
+      const cleanup = async () => {
+        for (const tempFile of temporaryFiles) {
+          await fs.remove(tempFile);
+        }
+      };
+
+      process.on("SIGINT", async () => {
+        await cleanup();
+        process.exit(1);
+      });
+
+      try {
+        const recipients = [
+          ...prepareFlagRecipients({
+            to: options.to,
+            cc: options.cc,
+            bcc: options.bcc,
+          }),
+        ];
+
+        if (recipients.length == 0) {
+          const recipientsInput = await promptRecipients();
+          recipients.push(...recipientsInput);
+        }
+
+        const subject = await getOrPromptInput({
+          key: "subject",
+          message: "Subject:",
+          flagValue: options.subject,
+        });
+
+        const message = await getOrPromptInput({
+          key: "message",
+          message: "Message:",
+          flagValue: options.message,
+        });
+
+        const { default: ttlDefault, values: ttlValues } = (
+          await apiSkp.fetchEnvironment()
+        ).expiration;
+
+        const ttl = await getOrPromptTtl({
+          flagValue: options.ttl,
+          defaultValue: ttlDefault,
+          values: ttlValues,
+        });
+
+        const transferPassword: string | undefined =
+          options.password === undefined
+            ? undefined
+            : options.password === true
+              ? await getOrPromptSecret({
+                  key: "password",
+                  message: "Transfer password: ",
+                  validate: (input) => {
+                    if (input.length <= 0)
+                      return "Please provide a transfer password";
+                    return true;
+                  },
+                })
+              : options.password;
+
+        const protection: TransferProtection | undefined = transferPassword
+          ? { enabled: true, key: transferPassword }
+          : undefined;
+
+        const reservationRequest: ReservationRequest = {
+          receivers: recipients,
+          subject: subject,
+          description: message,
+          protection: protection,
+          ttl: ttl,
+          files: reservationFiles,
+        };
+
+        const progressBar = new cliProgress.SingleBar(
+          {
+            format:
+              "{prefix} Transfer upload |" +
+              colors.cyan("{bar}") +
+              "| {percentage}%",
+          },
+          cliProgress.Presets.rect
+        );
+        const spinnerCreate = ora({
+          text: "Creating reservation...",
+          isEnabled: false,
+          isSilent: true,
+        });
+        const spinnerConfirm = ora({
+          text: "Confirming reservation...",
+          isEnabled: false,
+          isSilent: true,
+        });
+
+        spinnerCreate.start();
+
+        const result = await uploadService.uploadTransfer({
+          filePaths: localFiles,
+          reservationRequest: reservationRequest,
+          onProgress: (progress) => {
+            progressBar.update(progress, {
+              prefix:
+                progress === 100 ? coloredSymbols.tick : symbols.triangleRight,
+            });
+          },
+          onReservationCreated: () => {
+            spinnerCreate.succeed("Created reservation");
+            progressBar.start(100, 0, { prefix: symbols.triangleRight });
+          },
+          onReservationConfirm: () => {
+            progressBar.stop();
+            spinnerConfirm.start();
+          },
+        });
+        
+        spinnerConfirm!.succeed("Confirmed reservation");
+
+        console.log(
+          `${coloredSymbols.tick} ${colors.green.bold("Successfully uploaded transfer")}`
+        );
+        console.log(
+          `  ${colors.italic(`${config.get("host")}/transfer/get/${result.result[0].recipientId}`)}`
+        );
+      } finally {
+        await cleanup();
+      }
     });
+}
+async function prepareFiles(
+  filePaths: string[],
+  zipService: ZipService
+): Promise<{
+  localFiles: string[];
+  temporaryFiles: string[];
+  reservationFiles: ReservationRequestFile[];
+}> {
+  const localFiles: string[] = [];
+  const temporaryFiles: string[] = [];
+  const reservationFiles: ReservationRequestFile[] = [];
+
+  for (var [i, filePath] of filePaths.entries()) {
+    if (!fs.existsSync(filePath)) {
+      throw new InvalidArgumentError(
+        `Provided file does not exist: '${filePath}'`
+      );
+    }
+    let stat = fs.statSync(filePath);
+    if (stat.isDirectory()) {
+      const zipPath = await oraPromise(
+        zipService.zipDirectory(filePath),
+        "Creating zip file..."
+      );
+      let zipStat = fs.statSync(zipPath);
+      console.log(`Created zip at: ${zipPath}`);
+      console.log("File size:", zipStat.size);
+      localFiles.push(zipPath);
+      temporaryFiles.push(zipPath);
+      reservationFiles.push({
+        name: path.basename(zipPath),
+        size: zipStat.size,
+        id: `${i}`,
+      });
+      continue;
+    } else if (stat.isFile()) {
+      localFiles.push(filePath);
+      reservationFiles.push({
+        name: path.basename(filePath),
+        size: stat.size,
+        id: `${i}`,
+      });
+      continue;
+    } else {
+      throw new InvalidArgumentError(
+        `Unsupported file type found for  '${filePath}'`
+      );
+    }
+  }
+
+  return { localFiles, temporaryFiles, reservationFiles };
+}
+
+function prepareFlagRecipients({
+  to,
+  cc,
+  bcc,
+}: {
+  to?: string[];
+  cc?: string[];
+  bcc?: string[];
+}): TransferReceiver[] {
+  const flagRecipients: TransferReceiver[] = [
+    ...mapRecipients("to", to),
+    ...mapRecipients("cc", cc),
+    ...mapRecipients("bcc", bcc),
+  ];
+
+  if (flagRecipients.some((r) => z.string().email().safeParse(r.email).error)) {
+    throw new InvalidOptionArgumentError(
+      "Please provide valid email addresses"
+    );
+  }
+
+  return flagRecipients;
 }
