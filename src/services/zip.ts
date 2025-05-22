@@ -39,7 +39,7 @@ export class ZipService {
     }
   }
 
-  private async createZip(sourceDir: string, outPath: string): Promise<void> {
+  protected async createZip(sourceDir: string, outPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const output = createWriteStream(outPath);
       const archive = archiver("zip", { zlib: { level: 0 } }); // No compression

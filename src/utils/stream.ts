@@ -1,6 +1,6 @@
-import { WriteStream } from "fs";
+import { Writable } from "stream";
 
-export function streamPromise(stream: WriteStream) : Promise<void> {
+export function streamPromise(stream: Writable) : Promise<void> {
   return new Promise((resolve, reject) => {
     stream.on("end", () => {
       resolve();
