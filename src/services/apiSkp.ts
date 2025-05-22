@@ -1,12 +1,6 @@
-import axios, {
-  AxiosInstance,
-  AxiosProgressEvent,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from "axios";
+import axios from "axios";
 import { Readable } from "stream";
 import {
-  AccessTokenResponse,
   ReservationConfirmResult,
   ReservationRequest,
   ReservationResponse,
@@ -14,71 +8,51 @@ import {
   Transfer,
   TransferFile,
   TransferLocation,
-  UploadInfo,
+  UploadInfo
 } from "../entities/skp.js";
+import type { AuthAwareAxiosInstance } from "./auth/authAwareAxiosInstance.js";
+import { AuthManager } from "./auth/authManager.js";
+import { AuthType } from "./auth/authType.js";
+import { create401RetryInterceptor } from "./auth/create401RetryInterceptor.js";
+import { createAuthInterceptor } from "./auth/createAuthInterceptor.js";
+import { TokenApiClient } from "./auth/tokenApiClient.js";
 import { ConfigService } from "./config.js";
 
 const basePathSkp: string = "/api/skp/v1";
 
-// =============================================================================
-//                                skp-server
-// =============================================================================
-
 export class SkpApi {
-  protected authenticatedClient: AxiosInstance;
-  protected unauthenticatedClient: AxiosInstance;
-  protected tokenFetcherClient: AxiosInstance;
-  protected getIdToken: () => string;
+  private readonly axios: AuthAwareAxiosInstance;
 
-  constructor(host: string, getIdToken: () => string) {
-    this.getIdToken = getIdToken;
+  constructor(host: string, getIdToken: () => string | undefined) {
+    const baseURL = `${host}${basePathSkp}`;
 
-    const axiosConfig = {
-      baseURL: `${host}${basePathSkp}`,
-    };
+    const tokenApiClient = new TokenApiClient(baseURL);
+    const authManager = new AuthManager(getIdToken, tokenApiClient);
 
-    this.authenticatedClient = axios.create(axiosConfig);
-    this.unauthenticatedClient = axios.create(axiosConfig);
-    this.tokenFetcherClient = axios.create(axiosConfig);
-
-    const idTokenInjector = new IdTokenInjector(this.getIdToken);
-    this.tokenFetcherClient.interceptors.request.use(idTokenInjector.onRequest);
-
-    const accessTokenInterceptor = new AccessTokenInterceptor(() =>
-      this.fetchAccessToken()
-        .then((response) => response.token)
-        .catch((error) => {
-          console.error("Something went wrong: ", error);
-          throw error;
-        })
+    this.axios = axios.create({ baseURL }) as AuthAwareAxiosInstance;
+    this.axios.interceptors.request.use(
+      createAuthInterceptor(authManager, getIdToken)
     );
-    this.authenticatedClient.interceptors.request.use(
-      accessTokenInterceptor.onRequest
-    );
-    this.authenticatedClient.interceptors.response.use(
-      accessTokenInterceptor.onResponse,
-      accessTokenInterceptor.onResponseError
+    this.axios.interceptors.response.use(
+      undefined,
+      create401RetryInterceptor(authManager)
     );
   }
 
   async fetchEnvironment(): Promise<SkpEnvironment> {
-    const response =
-      await this.unauthenticatedClient.get<SkpEnvironment>("/environment");
-    return response.data;
-  }
-
-  async fetchAccessToken(): Promise<AccessTokenResponse> {
-    const response =
-      await this.tokenFetcherClient.post<AccessTokenResponse>("/auth/access");
+    const response = await this.axios.get<SkpEnvironment>("/environment", {
+      authType: AuthType.None,
+    });
     return response.data;
   }
 
   async createReservation(
     request: ReservationRequest
   ): Promise<ReservationResponse> {
-    const response = await this.authenticatedClient.post<ReservationResponse>(
+    const response = await this.axios.post<ReservationResponse>(
       "/reservations",
-      request
+      request,
+      { authType: AuthType.AccessToken }
     );
     return response.data;
   }
@@ -86,10 +60,11 @@ export class SkpApi {
   async confirmReservation(
     reservationId: string
   ): Promise<ReservationConfirmResult> {
-    const response =
-      await this.authenticatedClient.post<ReservationConfirmResult>(
-        `/reservations/${reservationId}/confirm`
-      );
+    const response = await this.axios.post<ReservationConfirmResult>(
+      `/reservations/${reservationId}/confirm`,
+      undefined,
+      { authType: AuthType.AccessToken }
+    );
     return response.data;
   }
 
@@ -104,9 +79,9 @@ export class SkpApi {
     endByte?: number;
     formData?: FormData;
     totalBytes?: number;
-    onUploadProgress?: (progressEvent: AxiosProgressEvent) => void;
+    onUploadProgress?: (progressEvent: any) => void;
   }): Promise<UploadInfo> {
-    var contentRange;
+    let contentRange;
     if (
       startByte !== undefined &&
       endByte !== undefined &&
@@ -114,16 +89,13 @@ export class SkpApi {
     ) {
       contentRange = `bytes ${startByte}-${endByte - 1}/${totalBytes}`;
     }
-    const response = await this.authenticatedClient.postForm<UploadInfo>(
+    const response = await this.axios.postForm<UploadInfo>(
       "/upload",
       formData,
       {
-        headers: !contentRange
-          ? undefined
-          : {
-              "Content-Range": contentRange,
-            },
-        onUploadProgress: onUploadProgress,
+        headers: contentRange ? { "Content-Range": contentRange } : undefined,
+        onUploadProgress,
+        authType: AuthType.AccessToken,
       }
     );
     return response.data;
@@ -133,14 +105,12 @@ export class SkpApi {
     objectId: string,
     reservationToken: string
   ): Promise<number> {
-    const response = await this.authenticatedClient.head(
-      `/upload/${objectId}`,
-      {
-        headers: {
-          "X-Skp-Auth": `${reservationToken}`,
-        },
-      }
-    );
+    const response = await this.axios.head(`/upload/${objectId}`, {
+      headers: {
+        "X-Skp-Auth": `${reservationToken}`,
+      },
+      authType: AuthType.AccessToken,
+    });
     return Number(response.headers["content-length"] ?? "0");
   }
 
@@ -151,15 +121,20 @@ export class SkpApi {
     location?: TransferLocation;
     search?: string;
   }): Promise<Transfer[]> {
-    const response = await this.authenticatedClient.get<
-      ListResponse<Transfer, "transfers">
-    >("/transfers", { params: { location: location, search: search } });
+    const response = await this.axios.get<ListResponse<Transfer, "transfers">>(
+      "/transfers",
+      {
+        params: { location, search },
+        authType: AuthType.AccessToken,
+      }
+    );
     return response.data.transfers;
   }
 
   async fetchTransfer(recipientId: string): Promise<Transfer> {
-    const response = await this.authenticatedClient.get<Transfer>(
-      `transfers/${recipientId}`
+    const response = await this.axios.get<Transfer>(
+      `transfers/${recipientId}`,
+      { authType: AuthType.AccessToken }
     );
     return response.data;
   }
@@ -171,9 +146,10 @@ export class SkpApi {
     recipientId: string;
     folderIdx: number;
   }): Promise<Transfer> {
-    const response = await this.authenticatedClient.post<Transfer>(
+    const response = await this.axios.post<Transfer>(
       `transfers/${recipientId}/copy`,
-      { idx: folderIdx }
+      { idx: folderIdx },
+      { authType: AuthType.AccessToken }
     );
     return response.data;
   }
@@ -183,13 +159,14 @@ export class SkpApi {
     onUploadProgress,
   }: {
     file: TransferFile;
-    onUploadProgress?: (progressEvent: AxiosProgressEvent) => void;
+    onUploadProgress?: (progressEvent: any) => void;
   }): Promise<Readable> {
-    const reponse = await this.unauthenticatedClient.get<Readable>(file.url, {
+    const response = await this.axios.get<Readable>(file.url, {
       responseType: "stream",
       onDownloadProgress: onUploadProgress,
+      authType: AuthType.None,
     });
-    return reponse.data;
+    return response.data;
   }
 }
 
@@ -201,52 +178,6 @@ export function createSkpApi(
     overrideHost ?? config.get("host")!,
     () => config.get("idToken")!
   );
-}
-
-class IdTokenInjector {
-  protected getIdToken: () => string;
-
-  constructor(getIdToken: () => string) {
-    this.getIdToken = getIdToken;
-  }
-
-  onRequest = async (
-    requestConfig: InternalAxiosRequestConfig
-  ): Promise<InternalAxiosRequestConfig> => {
-    requestConfig.headers.setAuthorization(`Bearer ${this.getIdToken()}`, true);
-    return requestConfig;
-  };
-}
-
-class AccessTokenInterceptor {
-  private accessToken?: string;
-
-  private fetchAccessToken: () => Promise<string>;
-
-  constructor(fetchAccessToken: () => Promise<string>) {
-    this.fetchAccessToken = fetchAccessToken;
-  }
-
-  getAccessToken = async (): Promise<string> =>
-    this.accessToken ?? (await this.fetchAccessToken());
-
-  onRequest = async (
-    requestConfig: InternalAxiosRequestConfig
-  ): Promise<InternalAxiosRequestConfig> => {
-    requestConfig.headers.setAuthorization(
-      `Bearer ${await this.getAccessToken()}`,
-      true
-    );
-    return requestConfig;
-  };
-
-  onResponse = async (response: AxiosResponse): Promise<AxiosResponse> => {
-    return response;
-  };
-
-  onResponseError = (error: any): any => {
-    return Promise.reject(error);
-  };
 }
 
 type ListResponse<T, K extends string> = {
