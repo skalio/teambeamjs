@@ -1,11 +1,12 @@
 import axios from "axios";
+import { AccessTokenResponse } from "../../entities/skp.js";
 
 export class TokenApiClient {
   constructor(private readonly baseUrl: string) {}
 
   async fetchAccessToken(idToken: string): Promise<string> {
-    const response = await axios.post(
-      `${this.baseUrl}/auth/access-token`,
+    const response = await axios.post<AccessTokenResponse>(
+      `${this.baseUrl}/auth/access`,
       undefined,
       {
         headers: {
@@ -14,6 +15,6 @@ export class TokenApiClient {
       }
     );
 
-    return response.data.accessToken;
+    return response.data.token;
   }
 }
