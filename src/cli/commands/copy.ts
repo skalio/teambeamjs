@@ -8,10 +8,10 @@ import { coloredSymbols } from "../../utils/symbols.js";
 
 export function buildCopyCommand(config: ConfigService): Command {
   return new Command("copy")
-    .description("Copy transfers from your inbox to a drive folder")
+    .description("Copy transfers from your inbox to an archive folder")
     .requiredOption(
-      "-d, --drive <folderIdx>",
-      "Drive folder ID where to copy the transfer into",
+      "-f, --folder <folderIdx>",
+      "Archive folder ID where to copy the transfer into",
       parseInt
     )
     .option(
@@ -20,7 +20,7 @@ export function buildCopyCommand(config: ConfigService): Command {
       parseInt
     )
     .action(async (options) => {
-      const { drive: folderIdx, interval } = options;
+      const { folder: folderIdx, interval } = options;
       const apiSkp = createSkpApi(config);
 
       await runWithOptionalInterval(interval, async () => {
@@ -33,18 +33,18 @@ export function buildCopyCommand(config: ConfigService): Command {
 
         if (transfers.length !== 0) {
           console.log(
-            `${coloredSymbols.stepSuccess} Transfers to copy: ${transfers.length}`
+            `${coloredSymbols.stepSuccess} Found ${transfers.length} transfer${transfers.length > 1 ? "s" : ""} to copy`
           );
           console.log(`${coloredSymbols.stepGap}`);
           console.log(
-            `${coloredSymbols.stepGap} Copying into drive folder ${folderIdx}...`
+            `${coloredSymbols.stepGap} Copying into archive folder ${folderIdx}...`
           );
 
           const bar = new cliProgress.SingleBar(
             {
               clearOnComplete: false,
               hideCursor: true,
-              format: `{prefix} Copying [{bar}] {value}/{total} Transfers`,
+              format: `{prefix} [{bar}] {value}/{total} transfer${transfers.length > 1 ? "s" : ""}`,
             },
             cliProgress.Presets.shades_classic
           );
@@ -54,7 +54,7 @@ export function buildCopyCommand(config: ConfigService): Command {
           });
 
           for (const transfer of transfers) {
-            await apiSkp.copyTransferToDrive({
+            await apiSkp.copyTransferToArchive({
               recipientId: transfer.recipientId,
               folderIdx,
             });

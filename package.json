@@ -1,6 +1,6 @@
 {
   "name": "teambeamjs",
-  "version": "3.0.0",
+  "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -15,22 +15,29 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . --ext .ts",
-    "format": "prettier --write .",
-    "init": "tsup && node dist/index.js init",
-    "zipupload": "tsup && node dist/index.js upload --to me@skalio.com -s 'Zip transfer test #1' -m '' --ttl 31 ~/Desktop/files/"
+    "format": "prettier --write ."
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/skalio/teambeamjs.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": {
+    "name": "Skalio GmbH",
+    "email": "info@skalio.com"
+  },
+  "license": "MIT",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/skalio/teambeamjs/blob/master/LICENSE-MIT"
+    }
+  ],
   "bugs": {
     "url": "https://github.com/skalio/teambeamjs/issues"
   },
   "homepage": "https://github.com/skalio/teambeamjs#readme",
-  "description": "Client to access the TeamBeam service.",
+  "description": "CLI for the TeamBeam service.",
   "devDependencies": {
     "@types/cli-progress": "^3.11.6",
     "@types/fs-extra": "^11.0.4",

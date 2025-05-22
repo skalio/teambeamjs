@@ -12,7 +12,7 @@ import { generateTotpCode } from "../../utils/totp.js";
 
 export function buildInitCommand(config: ConfigService): Command {
   return new Command("init")
-    .description("Initialize TeamBeam CLI configuration")
+    .description("Initialize configuration for teambeamjs")
     .option("-H, --host <host>", "API server hostname")
     .option("-e, --email <email>", "Email address")
     .option("-p --password <password>", "Password")
@@ -174,5 +174,6 @@ export function buildInitCommand(config: ConfigService): Command {
         throw new Error("StateError: should have obtained idToken by now");
 
       config.set({ host, email, password, idToken, otp });
+      console.log(`${coloredSymbols.stepDone} Config has been saved`);
     });
 }

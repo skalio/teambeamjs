@@ -13,7 +13,7 @@ import { coloredSymbols, symbols } from "../../utils/symbols.js";
 
 export function buildDownloadCommand(config: ConfigService): Command {
   return new Command("download")
-    .description("Download files from your inbox")
+    .description("Download transfers from your inbox")
     .option(
       "-d, --dir <directory>",
       "Path to directory where transfers will be stored"
@@ -54,7 +54,7 @@ export function buildDownloadCommand(config: ConfigService): Command {
 
         if (transfers.length > 0) {
           console.log(
-            `${symbols.triangleRight} ${transfers.length} transfer(s) found. Downloading...`
+            `${symbols.triangleRight} ${transfers.length} transfer${transfers.length > 1 ? "s" : ""} found. Downloading...`
           );
           console.log();
 

@@ -21,6 +21,7 @@ import { TransferUploadService } from "../../services/transferUpload.js";
 import { ZipService } from "../../services/zip.js";
 import { mapRecipients } from "../../utils/entities.js";
 import {
+  getOrPromptEditor,
   getOrPromptInput,
   getOrPromptSecret,
   getOrPromptTtl,
@@ -30,7 +31,7 @@ import { coloredSymbols, symbols } from "../../utils/symbols.js";
 
 export function buildUploadCommand(config: ConfigService): Command<[string[]]> {
   return new Command("upload")
-    .description("Send a TeamBeam transfer")
+    .description("Send a transfer")
     .option("-T, --to <emails...>", "Recipients")
     .option("-C, --cc <emails...>", "Recipients in copy")
     .option("-B, --bcc <emails...>", "Recipients in blind copy")
@@ -78,7 +79,7 @@ export function buildUploadCommand(config: ConfigService): Command<[string[]]> {
           flagValue: options.subject,
         });
 
-        const message = await getOrPromptInput({
+        const message = await getOrPromptEditor({
           key: "message",
           message: "Message:",
           flagValue: options.message,
@@ -162,7 +163,7 @@ export function buildUploadCommand(config: ConfigService): Command<[string[]]> {
             spinnerConfirm.start();
           },
         });
-        
+
         spinnerConfirm!.succeed("Confirmed reservation");
 
         console.log(
@@ -196,13 +197,11 @@ async function prepareFiles(
     }
     let stat = fs.statSync(filePath);
     if (stat.isDirectory()) {
-      const zipPath = await oraPromise(
-        zipService.zipDirectory(filePath),
-        "Creating zip file..."
-      );
+      const zipPath = await oraPromise(zipService.zipDirectory(filePath), {
+        text: `Creating zip file for '${filePath}'...`,
+        successText: `Created zip file for '${filePath}'`,
+      });
       let zipStat = fs.statSync(zipPath);
-      console.log(`Created zip at: ${zipPath}`);
-      console.log("File size:", zipStat.size);
       localFiles.push(zipPath);
       temporaryFiles.push(zipPath);
       reservationFiles.push({

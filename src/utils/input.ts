@@ -88,6 +88,7 @@ export async function getOrPromptSecret({
       name: "value",
       message,
       default: defaultValue,
+      mask: true,
       validate,
     },
   ]);
@@ -124,6 +125,7 @@ export async function getOrPromptEditor({
       name: "value",
       message,
       default: defaultValue,
+      waitForUseInput: true,
       validate,
     },
   ]);
@@ -203,8 +205,7 @@ export async function getOrPromptTtl({
   defaultValue: number;
   values: number[];
 }): Promise<number> {
-
-  if (flagValue) {
+  if (flagValue !== undefined) {
     const schema = z.union([
       z.number().refine((num) => values.includes(num), {
         message: `TTL value must be one of the allowed TTL values: ${values.join(", ")}.`,
@@ -224,7 +225,13 @@ export async function getOrPromptTtl({
           type: "list",
           name: "ttl",
           message: `TTL:`,
-          choices: values.map((ttl) => `${ttl} days`),
+          choices: values
+            .slice()
+            .sort((a, b) => a - b)
+            .map((ttl) => ({
+              name: `${ttl} day${ttl > 1 ? "s" : ""}`,
+              value: ttl,
+            })),
           default: values.indexOf(defaultValue),
         },
       ])

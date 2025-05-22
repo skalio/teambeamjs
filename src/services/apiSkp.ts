@@ -164,7 +164,7 @@ export class SkpApi {
     return response.data;
   }
 
-  async copyTransferToDrive({
+  async copyTransferToArchive({
     recipientId,
     folderIdx,
   }: {
@@ -178,7 +178,6 @@ export class SkpApi {
     return response.data;
   }
 
-  //async downloadTransferFile({file, path} : {file: TransferFile, path: fs.PathLike}) : Promise<void> {
   async streamTransferFile({
     file,
     onUploadProgress,

@@ -13,9 +13,13 @@ import { buildInitCommand } from "./commands/init.js";
 import { buildTmpDirCommand } from "./commands/tmpdir.js";
 import { buildUploadCommand } from "./commands/upload.js";
 
+
 const program = new Command();
 
-program.name("teambeam").description("Modern TeamBeam CLI").version("3.0.0");
+// TODO discuss with Tom which version to use here and in package.json
+program.name("teambeam").description("TeamBeam CLI").version("1.0.0");
+
+program.helpCommand(false);
 
 program.addCommand(buildInitCommand(config));
 program.addCommand(buildUploadCommand(config));
