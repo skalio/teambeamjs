@@ -22,6 +22,15 @@ export class ConfigService {
   clear(): void {
     this.store.clear();
   }
+
+  assertFullyConfigured(): void {
+    const missing = ["host", "email", "idToken"].filter(
+      (key) => !this.get(key as keyof ConfigSchema)
+    );
+    if (missing.length > 0) {
+      throw new Error("Incomplete config: please run 'teambeamjs init' first");
+    }
+  }
 }
 
 export const config = new ConfigService();

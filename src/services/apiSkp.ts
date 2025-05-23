@@ -1,6 +1,8 @@
 import axios from "axios";
 import { Readable } from "stream";
+import { constants } from "../core/constants.js";
 import {
+  AccessTokenResponse,
   ReservationConfirmResult,
   ReservationRequest,
   ReservationResponse,
@@ -8,34 +10,43 @@ import {
   Transfer,
   TransferFile,
   TransferLocation,
-  UploadInfo
+  UploadInfo,
 } from "../entities/skp.js";
-import type { AuthAwareAxiosInstance } from "./auth/authAwareAxiosInstance.js";
+import { AuthType, type AuthAwareAxiosInstance } from "./auth/authAwareAxios.js";
 import { AuthManager } from "./auth/authManager.js";
-import { AuthType } from "./auth/authType.js";
-import { create401RetryInterceptor } from "./auth/create401RetryInterceptor.js";
-import { createAuthInterceptor } from "./auth/createAuthInterceptor.js";
-import { TokenApiClient } from "./auth/tokenApiClient.js";
+import { createAuthRetryInterceptor } from "./auth/authRetryInterceptor.js";
+import { createAuthTokenInjectorInterceptor } from "./auth/authTokenInjector.js";
+import { TokenClient } from "./auth/tokenClient.js";
 import { ConfigService } from "./config.js";
 
-const basePathSkp: string = "/api/skp/v1";
+export function createSkpApi(
+  config: ConfigService,
+  overrideHost?: string
+): SkpApi {
+  return new SkpApi(
+    overrideHost ?? config.get("host")!,
+    () => config.get("idToken")!
+  );
+}
 
-export class SkpApi {
+export type { SkpApi };
+
+class SkpApi {
   private readonly axios: AuthAwareAxiosInstance;
 
   constructor(host: string, getIdToken: () => string | undefined) {
-    const baseURL = `${host}${basePathSkp}`;
+    const baseURL = `${host}${constants.basePathSkp}`;
 
-    const tokenApiClient = new TokenApiClient(baseURL);
-    const authManager = new AuthManager(getIdToken, tokenApiClient);
+    const tokenClient = new SkpTokenClient(baseURL);
+    const authManager = new AuthManager(getIdToken, tokenClient);
 
     this.axios = axios.create({ baseURL }) as AuthAwareAxiosInstance;
     this.axios.interceptors.request.use(
-      createAuthInterceptor(authManager, getIdToken)
+      createAuthTokenInjectorInterceptor(authManager, getIdToken)
     );
     this.axios.interceptors.response.use(
       undefined,
-      create401RetryInterceptor(authManager)
+      createAuthRetryInterceptor(authManager)
     );
   }
 
@@ -170,14 +181,21 @@ export class SkpApi {
   }
 }
 
-export function createSkpApi(
-  config: ConfigService,
-  overrideHost?: string
-): SkpApi {
-  return new SkpApi(
-    overrideHost ?? config.get("host")!,
-    () => config.get("idToken")!
-  );
+class SkpTokenClient implements TokenClient {
+  constructor(private readonly baseUrl: string) {}
+
+  async fetchAccessToken(idToken: string): Promise<string> {
+    const response = await axios.post<AccessTokenResponse>(
+      `${this.baseUrl}/auth/access`,
+      undefined,
+      {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      }
+    );
+    return response.data.token;
+  }
 }
 
 type ListResponse<T, K extends string> = {

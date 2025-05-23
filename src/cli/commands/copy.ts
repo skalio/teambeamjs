@@ -20,8 +20,11 @@ export function buildCopyCommand(config: ConfigService): Command {
       parseInt
     )
     .action(async (options) => {
-      const { folder: folderIdx, interval } = options;
+      config.assertFullyConfigured();
+
       const apiSkp = createSkpApi(config);
+
+      const { folder: folderIdx, interval } = options;
 
       await runWithOptionalInterval(interval, async () => {
         console.log(`${coloredSymbols.stepPrefix} Fetching transfers...`);

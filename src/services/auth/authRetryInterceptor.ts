@@ -1,9 +1,14 @@
 import axios, { AxiosError } from "axios";
-import { AuthenticatedRequestConfig } from "./authenticatedRequestConfig.js";
+import { AuthenticatedRequestConfig, AuthType } from "./authAwareAxios.js";
 import { AuthManager } from "./authManager.js";
-import { AuthType } from "./authType.js";
 
-export function create401RetryInterceptor(authManager: AuthManager) {
+/**
+ * Axios response interceptor that retries requests with a fresh access token
+ * after a 401 response. Only applies to requests with `authType: AccessToken`.
+ *
+ * Retries once, then falls back to the original error.
+ */
+export function createAuthRetryInterceptor(authManager: AuthManager) {
   return async (error: AxiosError) => {
     const config = error.config as AuthenticatedRequestConfig;
 

@@ -1,6 +1,7 @@
 import { Command } from "@commander-js/extra-typings";
 import colors from "ansi-colors";
 import { z } from "zod";
+import { constants } from "../../core/constants.js";
 import { SkalioIdEnvironment } from "../../entities/skalioId.js";
 import { createSkalioIdApi } from "../../services/apiSkalioId.js";
 import { createSkpApi } from "../../services/apiSkp.js";
@@ -31,7 +32,7 @@ export function buildInitCommand(config: ConfigService): Command {
         key: "host",
         message: "API Host:",
         flagValue: options.host,
-        defaultValue: previous.host,
+        defaultValue: previous.host ?? constants.defaultHost,
         validate: async (input) => {
           if (z.string().url().safeParse(input).error)
             return "Must be a valid URL";
@@ -172,8 +173,13 @@ export function buildInitCommand(config: ConfigService): Command {
 
       if (idToken === null)
         throw new Error("StateError: should have obtained idToken by now");
+      console.log(
+        `${coloredSymbols.stepDone} ${colors.green("Successfully logged in")}`
+      );
 
       config.set({ host, email, password, idToken, otp });
-      console.log(`${coloredSymbols.stepDone} Config has been saved`);
+      console.log(
+        `${coloredSymbols.stepDone} ${colors.green("Config has been saved")}`
+      );
     });
 }

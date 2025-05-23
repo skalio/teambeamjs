@@ -8,11 +8,10 @@ import { isAxiosError } from "axios";
 import { config } from "../services/config.js";
 import { coloredSymbols } from "../utils/symbols.js";
 import { buildCopyCommand } from "./commands/copy.js";
+import { addDebugCommands } from "./commands/debug.js";
 import { buildDownloadCommand } from "./commands/download.js";
 import { buildInitCommand } from "./commands/init.js";
-import { buildTmpDirCommand } from "./commands/tmpdir.js";
 import { buildUploadCommand } from "./commands/upload.js";
-
 
 const program = new Command();
 
@@ -26,7 +25,7 @@ program.addCommand(buildUploadCommand(config));
 program.addCommand(buildDownloadCommand(config));
 program.addCommand(buildCopyCommand(config));
 
-program.addCommand(buildTmpDirCommand(), { hidden: true });
+addDebugCommands(program);
 
 program.parseAsync().catch((err) => {
   let errorPrefix: string;

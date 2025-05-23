@@ -46,6 +46,7 @@ $ teambeamjs init
 ✔ API Host: https://free.teambeam.de
 ✔ Email: bob@example.org
 ✔ Password: *******
+✔ Successfully logged in
 ✔ Config has been saved
 ```
 

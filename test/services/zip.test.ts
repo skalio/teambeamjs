@@ -1,67 +1,72 @@
-import * as fs from 'fs-extra';
-import path from 'path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ZipService } from '../../src/services/zip.js';
-import { getTmpDir } from '../../src/utils/tmpDir.js';
+import * as fs from "fs-extra";
+import os from "os";
+import path from "path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { ZipService } from "../../src/services/zip.js";
 
-const TEST_DIR = path.join(getTmpDir(), 'zip-service-test');
+const BASE_TEST_DIR = path.join(os.tmpdir(), "zip-service-isolated-tests");
 
 class TestZipService extends ZipService {
-  protected override async createZip(_source: string, _target: string): Promise<void> {
-    // just create an empty file to simulate success
+  protected override async createZip(
+    _source: string,
+    _target: string
+  ): Promise<void> {
     await fs.ensureFile(_target);
   }
 }
 
-beforeEach(async () => {
-  await fs.ensureDir(TEST_DIR);
-});
+describe("ZipService.zipDirectory", () => {
+  let tmpDir: string;
+  let inputDir: string;
+  let outputDir: string;
 
-afterEach(async () => {
-  await fs.remove(TEST_DIR);
-});
+  beforeEach(async () => {
+    tmpDir = path.join(BASE_TEST_DIR, Date.now().toString());
+    inputDir = path.join(tmpDir, "input");
+    outputDir = path.join(tmpDir, "output");
 
-describe('ZipService.zipDirectory', () => {
-  it('creates a zip file in temp dir', async () => {
-    const testDir = path.join(TEST_DIR, 'my-folder');
-    await fs.ensureDir(testDir);
+    await fs.ensureDir(inputDir);
+    await fs.ensureDir(outputDir);
+  });
 
-    const service = new TestZipService();
-    const zipPath = await service.zipDirectory(testDir);
+  afterEach(async () => {
+    await fs.remove(tmpDir);
+  });
 
-    expect(zipPath).toMatch(/my-folder\.zip$/);
+  it("creates a zip file in temp dir", async () => {
+    const service = new TestZipService(outputDir);
+    const zipPath = await service.zipDirectory(inputDir);
+
+    expect(path.basename(zipPath)).toBe("input.zip");
     expect(await fs.pathExists(zipPath)).toBe(true);
   });
 
-  it('increments filename on collision', async () => {
-    const testDir = path.join(TEST_DIR, 'dupe');
-    await fs.ensureDir(testDir);
+  it("increments filename on collision", async () => {
+    const service = new TestZipService(outputDir);
+    const zip1 = await service.zipDirectory(inputDir);
+    const zip2 = await service.zipDirectory(inputDir);
 
-    const service = new TestZipService();
-    const zip1 = await service.zipDirectory(testDir);
-    const zip2 = await service.zipDirectory(testDir);
-
-    expect(zip1).toMatch(/dupe\.zip$/);
-    expect(zip2).toMatch(/dupe_1\.zip$/);
+    expect(path.basename(zip1)).toBe("input.zip");
+    expect(path.basename(zip2)).toBe("input_1.zip");
     expect(zip1).not.toBe(zip2);
   });
 
-  it('cleans up if createZip throws', async () => {
+  it("cleans up if createZip throws", async () => {
     class FailingService extends ZipService {
-      protected override async createZip(): Promise<void> {
-        throw new Error('zip failed');
+      protected override async createZip(
+        _source: string,
+        target: string
+      ): Promise<void> {
+        await fs.ensureFile(target);
+        throw new Error("zip failed");
       }
     }
 
-    const testDir = path.join(TEST_DIR, 'fail');
-    await fs.ensureDir(testDir);
+    const service = new FailingService(outputDir);
 
-    const service = new FailingService();
+    await expect(service.zipDirectory(inputDir)).rejects.toThrow(Error);
 
-    await expect(service.zipDirectory(testDir)).rejects.toThrow('Failed to create zip');
-
-    const leftoverFiles = await fs.readdir(getTmpDir());
-    const hasZip = leftoverFiles.some((f) => f.includes('fail'));
-    expect(hasZip).toBe(false);
+    const leftover = await fs.readdir(outputDir);
+    expect(leftover).toEqual([]);
   });
 });

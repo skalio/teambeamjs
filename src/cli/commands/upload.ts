@@ -41,6 +41,8 @@ export function buildUploadCommand(config: ConfigService): Command<[string[]]> {
     .option("-P, --password [password]", "Transfer password")
     .argument("<files...>", "Files of the transfer")
     .action(async (args, options) => {
+      config.assertFullyConfigured();
+      
       const apiSkp = createSkpApi(config);
       const zipService = new ZipService();
       const uploadService = new TransferUploadService(apiSkp);

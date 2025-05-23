@@ -1,9 +1,15 @@
 import { AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
+import { AuthenticatedRequestConfig, AuthType } from "./authAwareAxios.js";
 import { AuthManager } from "./authManager.js";
-import { AuthType } from "./authType.js";
-import { AuthenticatedRequestConfig } from "./authenticatedRequestConfig.js";
 
-export function createAuthInterceptor(
+/**
+ * Axios request interceptor that injects an Authorization header
+ * based on the request's {@link AuthType}.
+ *
+ * Supports {@link AuthType.IdToken} and {@link AuthType.AccessToken}.
+ * No-op for requests without an `authType`.
+ */
+export function createAuthTokenInjectorInterceptor(
   authManager: AuthManager,
   getIdToken: () => string | undefined
 ) {

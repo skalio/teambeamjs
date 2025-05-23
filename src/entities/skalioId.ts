@@ -128,3 +128,10 @@ export interface AccessTokenSkp extends Token {
   aud: Extract<TokenAudience, "http://skalio.com/skp">;
   // http://skalio.com/hostname string: The token is tied to a specific hostname
 }
+
+export interface EmailAddress {
+  address: string;
+  primary: boolean;
+  verified: boolean;
+  removeAt?: string;
+}

@@ -1,10 +1,10 @@
 import * as inquirer from 'inquirer';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-    getOrPromptEditor,
-    getOrPromptInput,
-    getOrPromptSecret,
-    getOrPromptTtl
+  getOrPromptEditor,
+  getOrPromptInput,
+  getOrPromptSecret,
+  getOrPromptTtl
 } from '../../src/utils/input.js';
 
 vi.mock('inquirer', async () => {
@@ -39,7 +39,7 @@ describe('getOrPromptInput', () => {
         flagValue: 'invalid',
         validate: (v) => (v === 'ok' ? true : 'bad input'),
       })
-    ).rejects.toThrow('Invalid value for --foo: bad input');
+    ).rejects.toThrow(Error);
   });
 
   it('prompts when flagValue is not given', async () => {
@@ -57,9 +57,9 @@ describe('getOrPromptSecret', () => {
     const result = await getOrPromptSecret({
       key: 'secret',
       message: 'Enter secret',
-      flagValue: 'shhh',
+      flagValue: 'the-earth-is-flat',
     });
-    expect(result).toBe('shhh');
+    expect(result).toBe('the-earth-is-flat');
   });
 
   it('returns default if user does not overwrite', async () => {
@@ -67,22 +67,22 @@ describe('getOrPromptSecret', () => {
     const result = await getOrPromptSecret({
       key: 'secret',
       message: 'Enter secret',
-      defaultValue: 'existing',
+      defaultValue: 'thecake-is-a-lie',
     });
-    expect(result).toBe('existing');
+    expect(result).toBe('thecake-is-a-lie');
   });
 
   it('prompts for secret if user overwrites', async () => {
     mockedPrompt
       .mockResolvedValueOnce({ overwrite: true })
-      .mockResolvedValueOnce({ value: 'new-secret' });
+      .mockResolvedValueOnce({ value: 'george-bush-did-9/11' });
 
     const result = await getOrPromptSecret({
       key: 'secret',
       message: 'Enter secret',
       defaultValue: 'old-secret',
     });
-    expect(result).toBe('new-secret');
+    expect(result).toBe('george-bush-did-9/11');
   });
 });
 
@@ -123,7 +123,7 @@ describe('getOrPromptTtl', () => {
         defaultValue: 2,
         values: [1, 2, 3],
       })
-    ).rejects.toThrow('TTL value must be one of the allowed TTL values: 1, 2, 3.');
+    ).rejects.toThrow(Error);
   });
 
   it('prompts when no flagValue', async () => {

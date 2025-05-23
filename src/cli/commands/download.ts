@@ -5,6 +5,7 @@ import downloadsFolder from "downloads-folder";
 import * as fs from "fs";
 import * as path from "path";
 import { TransferLocation } from "../../entities/skp.js";
+import { createSkalioIdApi } from "../../services/apiSkalioId.js";
 import { createSkpApi } from "../../services/apiSkp.js";
 import { ConfigService } from "../../services/config.js";
 import { runWithOptionalInterval } from "../../utils/runner.js";
@@ -31,9 +32,10 @@ export function buildDownloadCommand(config: ConfigService): Command {
       false
     )
     .action(async (options) => {
-      const apiSkp = createSkpApi(config);
+      config.assertFullyConfigured();
 
-      const watch = options.interval !== undefined;
+      const apiSkp = createSkpApi(config);
+      const apiSkalioId = createSkalioIdApi(config);
 
       const targetBaseDir = options.dir
         ? path.resolve(options.dir)
@@ -44,6 +46,11 @@ export function buildDownloadCommand(config: ConfigService): Command {
         : "received";
 
       return await runWithOptionalInterval(options.interval, async () => {
+        console.log(`${symbols.triangleRightOutlined} Fetching emails...`);
+
+        const emails = await apiSkalioId.fetchAllEmails();
+        console.log(`Fetched ${emails.length} emails:`, emails[0]);
+
         console.log(`${symbols.triangleRightOutlined} Fetching transfers...`);
 
         var transfers = await apiSkp.fetchTransfers({ location: location });

@@ -1,4 +1,6 @@
+import colors from "ansi-colors";
 import inquirer from "inquirer";
+import ora from "ora";
 import { z } from "zod";
 import { RecipientType, TransferReceiver } from "../entities/skp.js";
 import { mapRecipients } from "./entities.js";
@@ -73,9 +75,16 @@ export async function getOrPromptSecret({
     ]);
     if (!overwrite) {
       if (validate) {
+        const spinner = ora(
+          `${message} ${colors.cyan("*".repeat(defaultValue.length))}`
+        );
+        spinner.start();
         const result = await validate(defaultValue);
         if (result !== true) {
+          spinner.fail();
           throw new Error(`Invalid value for --${key}: ${result}`);
+        } else {
+          spinner.succeed();
         }
       }
       return defaultValue;

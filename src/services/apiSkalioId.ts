@@ -1,68 +1,73 @@
-import axios, {
-  AxiosInstance,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from "axios";
+import axios from "axios";
+import { constants } from "../core/constants.js";
 import {
   AuthRequest,
+  EmailAddress,
   SkalioIdEnvironment,
   TokenResponse,
 } from "../entities/skalioId.js";
+import {
+  AuthType,
+  type AuthAwareAxiosInstance,
+} from "./auth/authAwareAxios.js";
+import { AuthManager } from "./auth/authManager.js";
+import { createAuthRetryInterceptor } from "./auth/authRetryInterceptor.js";
+import { createAuthTokenInjectorInterceptor } from "./auth/authTokenInjector.js";
+import type { TokenClient } from "./auth/tokenClient.js";
 import { ConfigService } from "./config.js";
 
-const basePathSkalioId: string = "/api/id/v3";
+export function createSkalioIdApi(
+  config: ConfigService,
+  overrideHost?: string
+): SkalioIdApi {
+  return new SkalioIdApi(
+    overrideHost ?? config.get("host")!,
+    () => config.get("idToken")!
+  );
+}
 
-// =============================================================================
-//                                skalio-ID
-// =============================================================================
+export type { SkalioIdApi };
 
 class SkalioIdApi {
-  protected apiClient: AxiosInstance;
+  private readonly axios: AuthAwareAxiosInstance;
 
-  protected getIdToken: () => string;
-  protected setIdToken: (token: string) => void;
+  constructor(host: string, getIdToken: () => string) {
+    const baseURL = `${host}${constants.basePathSkalioId}`;
+    const tokenClient = new SkalioIdTokenClient(baseURL, getIdToken);
+    const authManager = new AuthManager(getIdToken, tokenClient);
 
-  constructor(
-    host: string,
-    getIdToken: () => string,
-    setIdToken: (token: string) => void
-  ) {
-    this.getIdToken = getIdToken;
-    this.setIdToken = setIdToken;
-
-    const axiosConfig = {
-      baseURL: `${host}${basePathSkalioId}`,
+    this.axios = axios.create({
+      baseURL,
       headers: { "Content-Type": "application/json" },
-    };
-    this.apiClient = axios.create(axiosConfig);
+    }) as AuthAwareAxiosInstance;
 
-    const accessTokenInterceptor = new AccessTokenInterceptor();
-    this.apiClient.interceptors.request.use(accessTokenInterceptor.onRequest);
-    this.apiClient.interceptors.response.use(
-      accessTokenInterceptor.onResponse,
-      accessTokenInterceptor.onResponseError
+    this.axios.interceptors.request.use(
+      createAuthTokenInjectorInterceptor(authManager, getIdToken)
+    );
+    this.axios.interceptors.response.use(
+      undefined,
+      createAuthRetryInterceptor(authManager)
     );
   }
 
   async fetchEnvironment(): Promise<SkalioIdEnvironment> {
-    return this.apiClient
-      .get<SkalioIdEnvironment>("/environment")
-      .then((response) => response.data);
+    const response = await this.axios.get<SkalioIdEnvironment>("/environment", {
+      authType: AuthType.None,
+    });
+    return response.data;
   }
 
   async doesAccountExist(emailAddress: string): Promise<boolean> {
-    return this.apiClient
-      .post<{
-        provider: string;
-      }>(
-        "/auth/exists",
-        { address: emailAddress },
-        {
-          validateStatus: (status) =>
-            (status >= 200 && status < 300) || status == 404,
-        }
-      )
-      .then((response) => response.status == 200);
+    const response = await this.axios.post<{ provider: string }>(
+      "/auth/exists",
+      { address: emailAddress },
+      {
+        validateStatus: (status) =>
+          (status >= 200 && status < 300) || status === 404,
+        authType: AuthType.None,
+      }
+    );
+    return response.status === 200;
   }
 
   async login(input: Omit<AuthRequest, "type">): Promise<TokenResponse> {
@@ -70,9 +75,12 @@ class SkalioIdApi {
       ...input,
       type: "bcrypt",
     };
-    return this.apiClient
-      .post<TokenResponse>("/auth/login", requestData)
-      .then((response) => response.data);
+    const response = await this.axios.post<TokenResponse>(
+      "/auth/login",
+      requestData,
+      { authType: AuthType.None }
+    );
+    return response.data;
   }
 
   async provideTotpCode(
@@ -83,43 +91,57 @@ class SkalioIdApi {
       ...input,
       type: "totp",
     };
-    return this.apiClient
-      .post<TokenResponse>("/auth/login", requestData, {
+    const response = await this.axios.post<TokenResponse>(
+      "/auth/login",
+      requestData,
+      {
         headers: { Authorization: `Bearer ${mfaToken}` },
-      })
-      .then((response) => response.data)
-      .catch((e) => {
-        console.error(e);
-        throw e;
-      });
+        authType: AuthType.None,
+      }
+    );
+    return response.data;
+  }
+
+  async fetchAccessToken(): Promise<TokenResponse> {
+    const response = await this.axios.post<TokenResponse>(
+      "/auth/access",
+      undefined,
+      { authType: AuthType.IdToken }
+    );
+    return response.data;
+  }
+
+  async fetchAllEmails(): Promise<EmailAddress[]> {
+    const response = await this.axios.get<ListResponse<EmailAddress, "emails">>(
+      "/profile/emails",
+      {
+        authType: AuthType.AccessToken,
+      }
+    );
+    return response.data.emails;
   }
 }
 
-export function createSkalioIdApi(
-  config: ConfigService,
-  overrideHost?: string
-): SkalioIdApi {
-  return new SkalioIdApi(
-    overrideHost ?? config.get("host")!,
-    () => config.get("idToken")!,
-    (value) => config.set({ idToken: value })
-  );
+class SkalioIdTokenClient implements TokenClient {
+  constructor(
+    private readonly baseUrl: string,
+    private readonly getIdToken: () => string | undefined
+  ) {}
+
+  async fetchAccessToken(): Promise<string> {
+    const response = await axios.post<TokenResponse>(
+      `${this.baseUrl}/auth/access`,
+      undefined,
+      {
+        headers: {
+          Authorization: `Bearer ${this.getIdToken()}`,
+        },
+      }
+    );
+    return response.data.token;
+  }
 }
 
-class AccessTokenInterceptor {
-  private accessToken?: string;
-
-  onRequest = async (
-    requestConfig: InternalAxiosRequestConfig
-  ): Promise<InternalAxiosRequestConfig> => {
-    return requestConfig;
-  };
-
-  onResponse = async (response: AxiosResponse): Promise<AxiosResponse> => {
-    return response;
-  };
-
-  onResponseError = (error: any): any => {
-    return Promise.reject(error);
-  };
-}
+type ListResponse<T, K extends string> = {
+  [key in K]: T[];
+};

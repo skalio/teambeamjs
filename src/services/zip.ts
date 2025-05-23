@@ -5,10 +5,10 @@ import * as path from "path";
 import { getTmpDir } from "../utils/tmpDir.js";
 
 export class ZipService {
-  private readonly tempDir: string;
+  private readonly tmpDir: string;
 
-  constructor() {
-    this.tempDir = getTmpDir();
+  constructor(overrideTmpDir?: string) {
+    this.tmpDir = overrideTmpDir ?? getTmpDir();
   }
 
   /**
@@ -18,15 +18,15 @@ export class ZipService {
    * @returns The full path to the created zip file
    */
   async zipDirectory(dirPath: string): Promise<string> {
-    await fs.ensureDir(this.tempDir);
+    await fs.ensureDir(this.tmpDir);
 
     const dirName = path.basename(dirPath);
-    let zipPath = path.join(this.tempDir, `${dirName}.zip`);
+    let zipPath = path.join(this.tmpDir, `${dirName}.zip`);
 
     // Handle filename collisions
     let counter = 1;
     while (await fs.pathExists(zipPath)) {
-      zipPath = path.join(this.tempDir, `${dirName}_${counter++}.zip`);
+      zipPath = path.join(this.tmpDir, `${dirName}_${counter++}.zip`);
     }
 
     try {
