@@ -59,6 +59,7 @@
     "commander": "^13.1.0",
     "conf": "^13.1.0",
     "downloads-folder": "^3.0.3",
+    "form-data": "^4.0.2",
     "fs-extra": "^11.3.0",
     "inquirer": "^12.5.2",
     "open": "^10.1.2",

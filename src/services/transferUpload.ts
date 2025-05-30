@@ -1,4 +1,5 @@
 import axios from "axios";
+import FormData from "form-data";
 import fs from "fs";
 import { constants } from "../core/constants.js";
 import {
@@ -152,12 +153,19 @@ export class TransferUploadService {
     uploadData: UploadData,
     token: string
   ): Promise<FormData> {
-    const blob = await fs.openAsBlob(uploadData.filePath);
-    const chunk = blob.slice(uploadData.startByte, uploadData.endByte);
+    const stream = fs.createReadStream(uploadData.filePath, {
+      start: uploadData.startByte,
+      end: uploadData.endByte! - 1, // `end` is inclusive
+    });
+
     const formData = new FormData();
     formData.append("objectId", uploadData.reservedFile.objectId);
     formData.append("authToken", token);
-    formData.append("f", chunk);
+    formData.append("f", stream, {
+      filename: uploadData.reservedFile.name,
+      knownLength: uploadData.endByte! - uploadData.startByte,
+    });
+
     return formData;
   }
 
