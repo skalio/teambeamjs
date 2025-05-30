@@ -151,7 +151,9 @@ export function buildInitCommand(config: ConfigService): Command {
           defaultValue: previous.otp,
           validate: async (val) => {
             if (!val) return "Please provide your TOTP secret";
-            const code = generateTotpCode(val);
+            // to support skp-launchpad's output which contains decorative whitespaces
+            const sanitized = val.replace(/\s+/g, "");
+            const code = generateTotpCode(sanitized);
             try {
               const { token } = await apiSkalioId.provideTotpCode(
                 { email, key: code },
@@ -169,6 +171,8 @@ export function buildInitCommand(config: ConfigService): Command {
             }
           },
         });
+        // to support skp-launchpad's output which contains decorative whitespaces
+        otp = otp.replace(/\s+/g, "");
       }
 
       if (idToken === null)
