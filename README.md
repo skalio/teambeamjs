@@ -196,6 +196,11 @@ $ sudo npm update -g skalio/teambeamjs
 ## Release History
 
 - v1.0.0 2025-05-26 Reimplemented the entire tool from scratch using modern TypeScript to support the next generation of the TeamBeam platform.
+  - Breaking changes:
+    - removed support for the legacy TeamBeam platform
+    - replaced copy command flag `-d`/`--drive` with `-f`/`--folder`
+    - removed `--config` option to all commands
+    - changed config file location and schema
 - v0.3.1 2022-07-05 Files are now uploaded sequentially - one upload waiting before the next starts in order to prevent RateLimitExceptions. Lifting versions of dependencies.
 - v0.3.0 2022-03-02 Adding new feature to copy received transfers to a drive folder. Interval actions now re-login on lost user sesion. Lifting versions of dependencies.
 - v0.2.4 2019-06-20 Fixing issue with zipping folders prior to uploading. Lifting versions of dependencies.
