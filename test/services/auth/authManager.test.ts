@@ -23,7 +23,7 @@ describe("AuthManager", () => {
     expect(tokenClient.fetchAccessToken).toHaveBeenCalledWith("id-token-123");
   });
 
-  it("returns cached access token if not expired", async () => {
+  it("returns cached access token if available", async () => {
     const first = await manager.getAccessToken();
     const second = await manager.getAccessToken();
 
