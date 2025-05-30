@@ -1,6 +1,6 @@
 import ora from "ora";
-import delay from "./delay.js"; // adjust import path as needed
-import { logTime } from "./output.js"; // adjust import path as needed
+import delay from "./delay.js";
+import { logTime } from "./output.js";
 
 /**
  * Runs the given function either once or repeatedly based on the interval.
