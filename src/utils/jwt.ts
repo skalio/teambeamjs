@@ -1,10 +1,10 @@
 import {
-    AccessToken,
-    AccessTokenSkalioId,
-    AccessTokenSkp,
-    IdToken,
-    MfaToken,
-    Token,
+  AccessToken,
+  AccessTokenSkalioId,
+  AccessTokenSkp,
+  IdToken,
+  MfaToken,
+  Token,
 } from "../entities/skalioId.js";
 
 /**
@@ -49,6 +49,6 @@ export function determineToken(decodedJwt: Object): Token | undefined {
     }
     default:
       const exhaustiveCheck: never = token.scope;
-      throw new Error(`Unhandled color case: ${exhaustiveCheck}`);
+      throw new Error(`Unhandled case over token scope switch: ${exhaustiveCheck}`);
   }
 }
