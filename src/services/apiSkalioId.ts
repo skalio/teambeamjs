@@ -102,15 +102,6 @@ class SkalioIdApi {
     return response.data;
   }
 
-  async fetchAccessToken(): Promise<TokenResponse> {
-    const response = await this.axios.post<TokenResponse>(
-      "/auth/access",
-      undefined,
-      { authType: AuthType.IdToken }
-    );
-    return response.data;
-  }
-
   async fetchAllEmails(): Promise<EmailAddress[]> {
     const response = await this.axios.get<ListResponse<EmailAddress, "emails">>(
       "/profile/emails",
