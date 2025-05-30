@@ -13,7 +13,7 @@ describe("createAuthTokenInjectorInterceptor", () => {
 
   beforeEach(() => {
     authManager = {
-      getValidAccessToken: vi.fn().mockResolvedValue(mockAccessToken),
+      getAccessToken: vi.fn().mockResolvedValue(mockAccessToken),
     } as unknown as AuthManager;
 
     getIdToken = vi.fn(() => mockIdToken);
@@ -47,7 +47,7 @@ describe("createAuthTokenInjectorInterceptor", () => {
     const result = await interceptor(config);
 
     expect(result.headers?.Authorization).toBe(`Bearer ${mockAccessToken}`);
-    expect(authManager.getValidAccessToken).toHaveBeenCalled();
+    expect(authManager.getAccessToken).toHaveBeenCalled();
   });
 
   it("does not modify headers if authType is undefined", async () => {

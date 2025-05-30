@@ -18,14 +18,14 @@ describe("AuthManager", () => {
   });
 
   it("fetches a new access token when none is cached", async () => {
-    const token = await manager.getValidAccessToken();
+    const token = await manager.getAccessToken();
     expect(token).toBe(mockToken);
     expect(tokenClient.fetchAccessToken).toHaveBeenCalledWith("id-token-123");
   });
 
   it("returns cached access token if not expired", async () => {
-    const first = await manager.getValidAccessToken();
-    const second = await manager.getValidAccessToken();
+    const first = await manager.getAccessToken();
+    const second = await manager.getAccessToken();
 
     expect(first).toBe(mockToken);
     expect(second).toBe(mockToken);
@@ -33,9 +33,9 @@ describe("AuthManager", () => {
   });
 
   it("clears cached token so next request triggers fetch", async () => {
-    await manager.getValidAccessToken();
+    await manager.getAccessToken();
     manager.clearAccessToken();
-    await manager.getValidAccessToken();
+    await manager.getAccessToken();
 
     expect(tokenClient.fetchAccessToken).toHaveBeenCalledTimes(2);
   });
@@ -44,7 +44,7 @@ describe("AuthManager", () => {
     getIdToken = vi.fn(() => undefined);
     manager = new AuthManager(getIdToken, tokenClient);
 
-    await expect(manager.getValidAccessToken()).rejects.toThrow(Error);
+    await expect(manager.getAccessToken()).rejects.toThrow(Error);
     expect(tokenClient.fetchAccessToken).not.toHaveBeenCalled();
   });
 });

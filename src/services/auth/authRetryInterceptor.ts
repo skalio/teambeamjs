@@ -21,7 +21,7 @@ export function createAuthRetryInterceptor(authManager: AuthManager) {
       authManager.clearAccessToken();
 
       try {
-        const newToken = await authManager.getValidAccessToken();
+        const newToken = await authManager.getAccessToken();
         config.headers = {
           ...config.headers,
           Authorization: `Bearer ${newToken}`,

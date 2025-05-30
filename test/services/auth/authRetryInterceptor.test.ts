@@ -28,7 +28,7 @@ describe("createAuthRetryInterceptor", () => {
     mockedAxios.mockClear();
 
     authManager = {
-      getValidAccessToken: vi.fn().mockResolvedValue(mockAccessToken),
+      getAccessToken: vi.fn().mockResolvedValue(mockAccessToken),
       clearAccessToken: vi.fn(),
     } as unknown as AuthManager;
   });
@@ -47,7 +47,7 @@ describe("createAuthRetryInterceptor", () => {
     const result = await retryInterceptor(error);
 
     expect(authManager.clearAccessToken).toHaveBeenCalled();
-    expect(authManager.getValidAccessToken).toHaveBeenCalled();
+    expect(authManager.getAccessToken).toHaveBeenCalled();
     expect(mockedAxios).toHaveBeenCalledWith({
       ...config,
       headers: { Authorization: `Bearer ${mockAccessToken}` },
@@ -96,7 +96,7 @@ describe("createAuthRetryInterceptor", () => {
 
     const error = createError(config);
 
-    vi.mocked(authManager.getValidAccessToken).mockRejectedValueOnce(
+    vi.mocked(authManager.getAccessToken).mockRejectedValueOnce(
       new Error("fail")
     );
 

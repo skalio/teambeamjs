@@ -27,7 +27,7 @@ export function createAuthTokenInjectorInterceptor(
         break;
       }
       case AuthType.AccessToken: {
-        const accessToken = await authManager.getValidAccessToken();
+        const accessToken = await authManager.getAccessToken();
         req.headers = {
           ...req.headers,
           Authorization: `Bearer ${accessToken}`,

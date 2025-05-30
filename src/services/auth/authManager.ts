@@ -18,12 +18,12 @@ export class AuthManager {
   ) {}
 
   /**
-   * Returns a valid access token, fetching a new one if needed.
+   * Returns an access token, fetching a new one if none is cached in-memory.
    *
-   * @returns A valid access token (possibly freshly fetched)
+   * @returns Anaccess token (either cached or freshly fetched)
    */
-  async getValidAccessToken(): Promise<string> {
-    if (this.accessToken && !this.isExpired(this.accessToken)) {
+  async getAccessToken(): Promise<string> {
+    if (this.accessToken) {
       return this.accessToken;
     }
 
@@ -40,14 +40,5 @@ export class AuthManager {
    */
   clearAccessToken() {
     this.accessToken = null;
-  }
-
-  /**
-   * Determines if the current token is expired.
-   */
-  private isExpired(_token: string): boolean {
-    // TODO: Consider implementing actual expiration logic.
-    // A static expiration check might be unreliable on systems with unsynced clocks.
-    return false;
   }
 }
