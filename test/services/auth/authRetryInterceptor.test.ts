@@ -51,18 +51,18 @@ describe("createAuthRetryInterceptor", () => {
     expect(mockedAxios).toHaveBeenCalledWith({
       ...config,
       headers: { Authorization: `Bearer ${mockAccessToken}` },
-      _retry: true,
+      _isRetry: true,
     });
     expect(result).toEqual({ data: "retried response" });
   });
 
-  it("does not retry if _retry is already true", async () => {
+  it("does not retry if request already _isRetry", async () => {
     const retryInterceptor = createAuthRetryInterceptor(authManager);
 
     const config: AuthenticatedRequestConfig = {
       authType: AuthType.AccessToken,
       headers: {},
-      _retry: true,
+      _isRetry: true,
     };
 
     const error = createError(config);

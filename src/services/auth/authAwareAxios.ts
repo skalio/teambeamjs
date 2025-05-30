@@ -63,11 +63,11 @@ export type AuthAwareAxiosInstance = Omit<
  * Extension of {@link AxiosRequestConfig} that supports custom authentication metadata.
  *
  * - `authType`: Indicates whether the request requires an {@link AuthType.AccessToken}, {@link AuthType.IdToken}, or no auth.
- * - `_retry`: Internal flag used to track whether a failed request has already been retried once.
+ * - `_isRetry`: Internal flag used to track whether a failed request has already been retried once.
  */
 export interface AuthenticatedRequestConfig extends AxiosRequestConfig {
   authType?: AuthType;
-  _retry?: boolean;
+  _isRetry?: boolean;
 }
 
 /**

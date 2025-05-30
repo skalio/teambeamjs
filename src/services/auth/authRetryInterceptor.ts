@@ -15,9 +15,9 @@ export function createAuthRetryInterceptor(authManager: AuthManager) {
     if (
       error.response?.status === 401 &&
       config.authType === AuthType.AccessToken &&
-      !config._retry
+      !config._isRetry
     ) {
-      config._retry = true;
+      config._isRetry = true;
       authManager.clearAccessToken();
 
       try {
