@@ -47,7 +47,7 @@ $ teambeamjs init
 ✔ Email: bob@example.org
 ✔ Password: *******
 ✔ Successfully logged in
-✔ Config has been saved
+✔ Config has been saved at /foo/bar/teambeamjs-nodejs/config.json
 ```
 
 If your account is protected by multi-factor authentication (MFA), you will also be prompted to enter your OTP secret. This is a short string used to generate time-based one-time passwords (TOTP), which can typically be found or exported from your authenticator app (such as Google Authenticator, 1Password, or similar). The secret is also briefly shown during the initial MFA setup in the TeamBeam web app and can be copied from there.

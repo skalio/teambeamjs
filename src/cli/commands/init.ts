@@ -183,7 +183,7 @@ export function buildInitCommand(config: ConfigService): Command {
 
       config.set({ host, email, password, idToken, otp });
       console.log(
-        `${coloredSymbols.stepDone} ${colors.green("Config has been saved")}`
+        `${coloredSymbols.stepDone} ${colors.green("Config has been saved")} at ${colors.italic(config["store"].path)}`
       );
     });
 }
