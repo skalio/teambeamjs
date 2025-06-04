@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "command": "npm run build && npm start init",
+            "name": "Init command - interactive",
+            "request": "launch",
+            "type": "node-terminal"
+        },
+        {
+            "command": "npm run build && npm start upload -- --to test@skalio.com -s 'my subject' -m 'my message' --ttl 3 ~/Downloads/avatar.png",
+            "name": "Upload command - complete & fast",
+            "request": "launch",
+            "type": "node-terminal"
+        },
+        {
+            "command": "npm run build && npm start upload -- --to test@skalio.com -s 'my subject' -m 'my message' --ttl 3 ~/Downloads/banidb.db",
+            "name": "Upload command - complete & slow",
+            "request": "launch",
+            "type": "node-terminal"
+        }
+    ]
+}
