@@ -25,6 +25,8 @@ the commit messages, and push to `origin/master`.
 ## Preparing a release
 Once all work for a release is done, perform these steps:
 
+1. Build the project via `npm run build` and commit the result to `master`
+   (this will update the `dist` folder)
 1. `README.md`: update documentation as necessary; update revision history
 at the bottom; commit
 1. `package.json`: update version number; commit "Lifting version to v0.x.y"
