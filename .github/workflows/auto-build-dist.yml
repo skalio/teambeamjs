@@ -1,0 +1,52 @@
+name: Auto-build and commit dist
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-dist:
+    name: Build dist on push to master
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build dist with tsup
+        run: npm run build
+
+      - name: Check if dist has changed
+        id: git-check
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Stage any changes
+          git add dist
+
+          # Check if there's anything to commit
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Changes detected in dist/"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push dist if changed
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          git commit -m "chore: build dist (auto) [skip ci]"
+          git push
