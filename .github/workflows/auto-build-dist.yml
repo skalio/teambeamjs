@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master   # trigger on pushes to master
+      - master   # trigger on pushes to master (adjust if needed)
 
 permissions:
   contents: write
@@ -67,3 +67,4 @@ jobs:
         run: |
           git commit -m "chore: build dist (auto) [skip ci]"
           git push https://x-access-token:${TOKEN}@github.com/${{ github.repository }} HEAD:master
+          
