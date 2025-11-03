@@ -1,39 +1,69 @@
-name: Auto-update main
+name: Auto-build and commit dist
 
 on:
   workflow_dispatch:
   push:
-    branches: [master/**]   # what triggers the automation
+    branches:
+      - master   # trigger on pushes to master
 
 permissions:
-  contents: write        # needed to push
+  contents: write
 
 jobs:
-  update-main:
+  build-and-commit:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false   # important: we'll use the App token instead
 
-      # 1) Create an installation access token for your App
+    steps:
+      # 1️⃣ Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false  # we'll use the App token instead
+
+      # 2️⃣ Set up Node
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # 4️⃣ Build your code (produces ./dist)
+      - name: Build dist with tsup
+        run: npm run build
+
+      # 5️⃣ Create an installation token for your GitHub App
       - id: app-token
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      # 2) Make your changes (build, format, version bump, etc.)
-      - run: |
+      # 6️⃣ Check if dist has changed
+      - name: Check if dist has changed
+        id: git-check
+        run: |
           git config user.name "build-action-bot[bot]"
           git config user.email "build-action-bot[bot]@users.noreply.github.com"
-          git add dist
-          git commit -m "chore: build dist (auto) [skip ci]"
 
-      # 3) Push using the App token (actor = your GitHub App)
-      - name: Push to protected branch
+          git add dist || echo "No dist directory to add"
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Changes detected in dist/"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 7️⃣ Commit and push only if dist changed
+      - name: Commit and push dist if changed
+        if: steps.git-check.outputs.changed == 'true'
         env:
           TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          git commit -m "chore: build dist (auto) [skip ci]"
           git push https://x-access-token:${TOKEN}@github.com/${{ github.repository }} HEAD:master
-          
