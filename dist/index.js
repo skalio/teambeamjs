@@ -306,7 +306,7 @@ var SkpApi = class {
     const response = await this.axios.get(file.url, {
       responseType: "stream",
       onDownloadProgress: onUploadProgress,
-      authType: "none" /* None */
+      authType: "access_token" /* AccessToken */
     });
     return response.data;
   }
