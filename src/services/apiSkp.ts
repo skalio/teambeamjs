@@ -176,7 +176,7 @@ class SkpApi {
     const response = await this.axios.get<Readable>(file.url, {
       responseType: "stream",
       onDownloadProgress: onUploadProgress,
-      authType: AuthType.None,
+      authType: AuthType.AccessToken,
     });
     return response.data;
   }
