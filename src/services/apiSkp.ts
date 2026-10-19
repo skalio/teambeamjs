@@ -38,7 +38,8 @@ class SkpApi {
   constructor(host: string, getIdToken: () => string | undefined) {
     const baseURL = `${host}${constants.basePathSkp}`;
 
-    const tokenClient = new SkpTokenClient(baseURL);
+    // v2 access tokens also authorize the v1 calls below
+    const tokenClient = new SkpTokenClient(`${host}${constants.basePathSkpV2}`);
     const authManager = new AuthManager(getIdToken, tokenClient);
 
     this.axios = axios.create({ baseURL }) as AuthAwareAxiosInstance;
