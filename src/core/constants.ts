@@ -7,5 +7,6 @@ export const constants = {
   tempDirName: "teambeamjs",
   basePathSkalioId: "/api/id/v3",
   basePathSkp: "/api/skp/v1",
+  basePathSkpV2: "/api/skp/v2",
   defaultHost: "https://free.teambeam.de",
 } as const;
